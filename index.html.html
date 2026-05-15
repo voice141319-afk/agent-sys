@@ -1,0 +1,2172 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>代理對帳系統</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root{
+  --bg:#0d0f14;
+  --bg2:#13161f;
+  --bg3:#1a1e2a;
+  --bg4:#212636;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.13);
+  --text:#dde1ee;
+  --text2:#8890aa;
+  --text3:#4a5068;
+  --accent:#c8f542;
+  --accent2:#42f5c8;
+  --blue:#5b9cf6;
+  --pink:#e87cb8;
+  --teal:#3dd9a4;
+  --purple:#a78bfa;
+  --amber:#f5a742;
+  --red:#f56262;
+  --mj-c:#a3d44a; --mj-bg:rgba(163,212,74,0.1); --mj-border:rgba(163,212,74,0.25);
+  --fan-c:#3dd9a4; --fan-bg:rgba(61,217,164,0.1); --fan-border:rgba(61,217,164,0.25);
+  --qs-c:#f5a742;  --qs-bg:rgba(245,167,66,0.1);  --qs-border:rgba(245,167,66,0.25);
+  --unk-c:#f56262; --unk-bg:rgba(245,98,98,0.08);  --unk-border:rgba(245,98,98,0.25);
+  --whale-c:#5b9cf6; --whale-bg:rgba(91,156,246,0.1); --whale-border:rgba(91,156,246,0.3);
+  --honey-c:#e87cb8; --honey-bg:rgba(232,124,184,0.1); --honey-border:rgba(232,124,184,0.3);
+  --aplatform-c:#3dd9a4; --aplatform-bg:rgba(61,217,164,0.1); --aplatform-border:rgba(61,217,164,0.3);
+  --qilai-c:#a78bfa; --qilai-bg:rgba(167,139,250,0.1); --qilai-border:rgba(167,139,250,0.3);
+  --dantan-c:#f5c842; --dantan-bg:rgba(245,200,66,0.1); --dantan-border:rgba(245,200,66,0.3);
+  --kuo-c:#f59e42; --kuo-bg:rgba(245,158,66,0.1); --kuo-border:rgba(245,158,66,0.3);
+  --radius:8px;
+}
+
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;display:flex;flex-direction:column;}
+
+/* ── HEADER ── */
+.app-header{display:flex;align-items:center;gap:14px;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;}
+.app-logo{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--accent);letter-spacing:.04em;}
+.app-logo span{color:var(--text3);}
+.app-tagline{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:.06em;}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.last-save{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);}
+
+/* ── NAV TABS ── */
+.nav{display:flex;gap:2px;padding:0 24px;background:var(--bg2);border-bottom:1px solid var(--border);}
+.nav-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:9px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--text3);cursor:pointer;transition:all .15s;letter-spacing:.04em;display:flex;align-items:center;gap:6px;}
+.nav-btn:hover{color:var(--text2);}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.nav-icon{font-size:13px;}
+
+/* ── MAIN ── */
+.main{flex:1;padding:22px 24px;overflow:auto;}
+.page{display:none;}.page.active{display:block;}
+
+/* ── BUTTONS ── */
+.btn{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 13px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn:hover{color:var(--text);border-color:var(--text3);}
+.btn.primary{background:var(--mj-bg);border-color:var(--mj-border);color:var(--mj-c);}
+.btn.primary:hover{background:rgba(163,212,74,0.18);}
+.btn.accent{background:rgba(200,245,66,.12);border-color:rgba(200,245,66,.35);color:var(--accent);font-weight:600;}
+.btn.accent:hover{background:rgba(200,245,66,.2);}
+.btn.danger{background:var(--unk-bg);border-color:var(--unk-border);color:var(--red);}
+.btn.sm{padding:3px 8px;font-size:10px;}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+
+/* ── PANELS ── */
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px;}
+.panel-title{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.panel-title::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:800px){.grid2{grid-template-columns:1fr;}}
+.full{grid-column:1/-1;}
+
+/* ── INPUTS ── */
+.inp{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 9px;width:100%;transition:border-color .15s;outline:none;}
+.inp:focus{border-color:var(--mj-border);}
+textarea.inp{resize:vertical;min-height:70px;}
+select.inp option{background:var(--bg3);}
+
+/* ── STATUS ── */
+.status{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);margin-top:7px;min-height:16px;}
+.status.ok{color:var(--mj-c);}
+.status.err{color:var(--red);}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── UPLOAD ZONE ── */
+.uzone{border:2px dashed var(--border);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+.uzone:hover,.uzone.drag{border-color:var(--accent);background:rgba(200,245,66,.03);}
+.uzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.uzone-ico{font-size:22px;margin-bottom:5px;opacity:.4;}
+.uzone-lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);}
+.uzone-lbl b{color:var(--accent);}
+#preview-img{max-width:100%;border-radius:6px;border:1px solid var(--border);display:none;margin-top:10px;}
+
+/* ── SOURCE BTNS ── */
+.src-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+.src-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);}
+.src-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:5px 14px;border-radius:6px;border:1.5px solid var(--border);background:var(--bg3);color:var(--text3);cursor:pointer;transition:all .15s;}
+.src-btn:hover{color:var(--text2);}
+.src-btn.sw.active{border-color:var(--whale-border);color:var(--whale-c);background:var(--whale-bg);}
+.src-btn.sh.active{border-color:var(--honey-border);color:var(--honey-c);background:var(--honey-bg);}
+.src-btn.sa.active{border-color:var(--aplatform-border);color:var(--aplatform-c);background:var(--aplatform-bg);}
+.src-btn.sq.active{border-color:var(--qilai-border);color:var(--qilai-c);background:var(--qilai-bg);}
+.src-btn.sd.active{border-color:var(--dantan-border);color:var(--dantan-c);background:var(--dantan-bg);}
+.src-btn.sk.active{border-color:var(--kuo-border);color:var(--kuo-c);background:var(--kuo-bg);}
+.src-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(200,245,66,.08);}
+
+/* ── STAT CHIPS ── */
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);}
+.chip .n{font-weight:600;font-size:13px;margin-right:3px;}
+.chip.t .n{color:var(--accent2);}
+.chip.m .n{color:var(--accent);}
+.chip.u .n{color:var(--red);}
+
+/* ── RESULT TABLE ── */
+.rtable{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+.rtable th{background:var(--bg3);color:var(--text3);font-weight:600;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+.rtable td{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.rtable tr:hover td{background:rgba(255,255,255,.02);}
+.rtable tr.agent-hdr td{background:var(--bg3);color:var(--text2);font-size:11px;padding:5px 10px;border-top:1px solid var(--border);}
+.team-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;}
+.badge-MJ{background:var(--mj-bg);color:var(--mj-c);border:1px solid var(--mj-border);}
+.badge-凡{background:var(--fan-bg);color:var(--fan-c);border:1px solid var(--fan-border);}
+.badge-清水{background:var(--qs-bg);color:var(--qs-c);border:1px solid var(--qs-border);}
+.badge-unk{background:var(--unk-bg);color:var(--unk-c);border:1px solid var(--unk-border);}
+.neg{color:#ff6b6b;}.pos{color:#69db7c;}.zero{color:var(--text3);}
+
+/* ── SUBTOTAL CARDS ── */
+.sub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-bottom:20px;}
+.sub-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
+.sub-card-title{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;margin-bottom:10px;}
+.sub-card-title.MJ{color:var(--mj-c);}
+.sub-card-title.凡{color:var(--fan-c);}
+.sub-card-title.清水{color:var(--qs-c);}
+.sub-card-title.unk{color:var(--unk-c);}
+.sub-row{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;margin-bottom:4px;}
+.sub-label{color:var(--text3);}
+.sub-val{font-weight:600;}
+
+/* ── WARN BANNER ── */
+.warn{background:rgba(245,167,66,.07);border:1px solid rgba(245,167,66,.2);border-radius:6px;padding:7px 13px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--amber);margin-bottom:13px;display:none;}
+.warn.show{display:block;}
+
+/* ── LEGEND ── */
+.legend{display:flex;gap:12px;flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2);}
+.legend-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+
+/* ── CLUB PAGE ── */
+.platform-block{margin-bottom:22px;}
+.platform-header{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.platform-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid;font-family:'IBM Plex Mono',monospace;}
+.platform-badge.whale{background:var(--whale-bg);border-color:var(--whale-border);color:var(--whale-c);}
+.platform-badge.honey{background:var(--honey-bg);border-color:var(--honey-border);color:var(--honey-c);}
+.platform-badge.aplatform{background:var(--aplatform-bg);border-color:var(--aplatform-border);color:var(--aplatform-c);}
+.platform-badge.qilai{background:var(--qilai-bg);border-color:var(--qilai-border);color:var(--qilai-c);}
+.platform-badge.dantan{background:var(--dantan-bg);border-color:var(--dantan-border);color:var(--dantan-c);}
+.platform-badge.kuo{background:var(--kuo-bg);border-color:var(--kuo-border);color:var(--kuo-c);}
+.platform-header hr{flex:1;border:none;border-top:1px solid var(--border);}
+.add-club-inline{padding:3px 9px;border-radius:4px;font-size:11px;cursor:pointer;border:1px dashed var(--border2);background:transparent;color:var(--text3);font-family:'Noto Sans TC',sans-serif;transition:all .15s;}
+.add-club-inline:hover{color:var(--text2);border-color:var(--text3);}
+
+.club-row{display:flex;align-items:center;gap:8px;padding:8px 11px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);transition:border-color .15s;margin-bottom:5px;}
+.club-row:hover{border-color:var(--border2);}
+.club-row.banned{opacity:.35;}
+.club-name-badge{min-width:88px;font-size:12px;font-weight:500;font-family:'IBM Plex Mono',monospace;padding:2px 7px;border-radius:4px;border:1px solid;text-align:center;}
+.club-name-badge.whale{background:var(--whale-bg);border-color:var(--whale-border);color:var(--whale-c);}
+.club-name-badge.honey{background:var(--honey-bg);border-color:var(--honey-border);color:var(--honey-c);}
+.club-name-badge.aplatform{background:var(--aplatform-bg);border-color:var(--aplatform-border);color:var(--aplatform-c);}
+.club-name-badge.qilai{background:var(--qilai-bg);border-color:var(--qilai-border);color:var(--qilai-c);}
+.club-name-badge.dantan{background:var(--dantan-bg);border-color:var(--dantan-border);color:var(--dantan-c);}
+.club-name-badge.kuo{background:var(--kuo-bg);border-color:var(--kuo-border);color:var(--kuo-c);}
+.club-name-badge.banned{background:var(--unk-bg);border-color:var(--unk-border);color:var(--red);}
+
+.tag-row{display:flex;flex-wrap:wrap;gap:5px;flex:1;}
+.tag{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid;}
+.tag.mj{background:var(--mj-bg);border-color:var(--mj-border);color:var(--mj-c);}
+.tag.fan{background:var(--fan-bg);border-color:var(--fan-border);color:var(--fan-c);}
+.tag.qs{background:var(--qs-bg);border-color:var(--qs-border);color:var(--qs-c);}
+.tag.shared{background:rgba(136,135,128,0.12);border-color:rgba(136,135,128,0.3);color:#b4b2a9;font-style:italic;font-size:10px;}
+.tag.unassigned{background:rgba(136,135,128,0.12);border-color:rgba(136,135,128,0.3);color:#b4b2a9;font-style:italic;font-size:10px;}
+.tag.prep{background:rgba(186,117,23,.15);border-color:rgba(186,117,23,.4);color:var(--amber);font-style:italic;font-size:10px;}
+.tag.pending{background:rgba(136,135,128,0.12);border-color:rgba(136,135,128,0.3);color:var(--text3);font-style:italic;font-size:10px;}
+.tag.banned{background:var(--unk-bg);border-color:var(--unk-border);color:var(--red);font-size:10px;}
+.tag.planning{background:rgba(186,117,23,.12);border-color:rgba(186,117,23,.3);color:var(--amber);font-size:10px;}
+
+.agent-pill{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--teal);background:rgba(61,217,164,.08);padding:2px 8px;border-radius:4px;border:1px solid rgba(61,217,164,.2);white-space:nowrap;flex-shrink:0;}
+.row-actions{display:none;gap:4px;margin-left:4px;flex-shrink:0;}
+.club-row:hover .row-actions{display:flex;}
+.row-btn{padding:2px 7px;border-radius:4px;font-size:10px;cursor:pointer;border:1px solid;background:transparent;font-family:'Noto Sans TC',sans-serif;transition:all .15s;}
+.row-btn.edit{border-color:var(--border2);color:var(--text3);}.row-btn.edit:hover{color:var(--text2);}
+.row-btn.ban{border-color:var(--unk-border);color:var(--red);}
+.row-btn.del{border-color:var(--unk-border);color:var(--red);}
+
+.banned-section{margin-top:6px;}
+.banned-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:5px 8px;border-radius:6px;background:rgba(245,98,98,0.05);border:1px dashed rgba(245,98,98,0.2);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);transition:all .15s;user-select:none;}
+.banned-toggle:hover{color:var(--red);border-color:rgba(245,98,98,0.4);}
+.banned-toggle .arrow{transition:transform .2s;font-size:10px;}
+.banned-toggle.open .arrow{transform:rotate(90deg);}
+.banned-inner{display:none;margin-top:6px;}
+.banned-inner.open{display:block;}
+.platform-note{margin-top:6px;font-size:11px;color:var(--text3);padding:5px 10px;border-left:2px solid var(--border2);line-height:1.7;cursor:pointer;}
+.platform-note:hover{border-left-color:var(--text3);color:var(--text2);}
+
+/* ── SUB-TABS (club page) ── */
+.sub-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);}
+.sub-tab{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 13px;border:1px solid transparent;border-bottom:none;border-radius:6px 6px 0 0;background:transparent;color:var(--text3);cursor:pointer;transition:all .15s;position:relative;bottom:-1px;}
+.sub-tab:hover{color:var(--text2);}
+.sub-tab.active{color:var(--text);background:var(--bg2);border-color:var(--border);border-bottom-color:var(--bg);font-weight:500;}
+
+/* ── AGENT PAGE ── */
+.agent-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+.agent-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.agent-card-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.agent-card-id{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);background:var(--bg3);padding:2px 7px;border-radius:4px;}
+.agent-card-name{font-weight:700;font-size:15px;}
+.agent-card-mail{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);margin-top:1px;}
+.agent-info-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
+.agent-info-label{color:var(--text3);}
+.agent-info-val{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2);}
+.agent-clubs{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.agent-clubs-title{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;}
+.agent-club-item{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-size:12px;}
+.empty-state{text-align:center;padding:40px;color:var(--text3);font-family:'IBM Plex Mono',monospace;font-size:12px;}
+
+/* ── ACCOUNT TABLE PAGE ── */
+.map-grid-hdr{display:grid;grid-template-columns:120px 80px 90px 120px 120px 28px;gap:4px;align-items:center;margin-bottom:5px;}
+.map-grid-row{display:grid;grid-template-columns:120px 80px 90px 120px 120px 28px;gap:4px;align-items:center;margin-bottom:4px;}
+.gh{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);padding:0 5px 5px;border-bottom:1px solid var(--border);}
+.del-btn{width:26px;height:26px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.del-btn:hover{border-color:var(--red);color:var(--red);}
+.count-note{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:420px;max-width:94vw;max-height:90vh;overflow-y:auto;}
+.modal h3{font-size:14px;font-weight:700;margin-bottom:16px;}
+.form-group{margin-bottom:12px;}
+.form-group label{display:block;font-size:11px;color:var(--text3);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;}
+.checkbox-group{display:flex;flex-wrap:wrap;gap:8px;}
+.checkbox-group label{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);cursor:pointer;}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+hr.sep{border:none;border-top:1px solid var(--border);margin:14px 0;}
+
+/* ── PROFIT CALCULATOR ── */
+.pr-note{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
+.pr-team-panel{transition:border-color .2s;}
+.pr-team-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.pr-team-label{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;padding:2px 10px;border-radius:4px;border:1px solid;}
+.pr-team-label.mj{background:var(--mj-bg);border-color:var(--mj-border);color:var(--mj-c);}
+.pr-team-label.qs{background:var(--qs-bg);border-color:var(--qs-border);color:var(--qs-c);}
+.pr-team-label.fan{background:var(--fan-bg);border-color:var(--fan-border);color:var(--fan-c);}
+.pr-team-rule{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
+.pr-rate-badge{margin-left:auto;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--accent);background:rgba(200,245,66,.08);padding:2px 8px;border-radius:4px;border:1px solid rgba(200,245,66,.2);}
+.pr-input-grid{display:grid;grid-template-columns:36px 1fr 36px 1fr 36px 1fr;gap:6px;align-items:center;}
+.pr-line-label{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:5px 4px;border-radius:4px;text-align:center;}
+.pr-line-label.guo{background:var(--whale-bg);color:var(--whale-c);}
+.pr-line-label.xin{background:var(--mj-bg);color:var(--mj-c);}
+.pr-line-label.rocket{background:var(--qilai-bg);color:var(--qilai-c);}
+.pr-line-label.dantan{background:var(--dantan-bg);color:var(--dantan-c);}
+
+.pr-section{background:var(--bg3);border-radius:var(--radius);padding:13px 15px;margin-bottom:10px;}
+.pr-section-title{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.pr-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);}
+.pr-row:last-child{border-bottom:none;}
+.pr-row-label{color:var(--text2);}
+.pr-row-val{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+.pr-row-val.pos{color:#69db7c;}
+.pr-row-val.neg{color:#ff6b6b;}
+.pr-total-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;margin-top:6px;border-top:2px solid var(--border2);}
+.pr-total-label{font-weight:700;font-size:13px;}
+.pr-total-val{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;}
+.pr-divider{border:none;border-top:1px solid var(--border);margin:10px 0;}
+.pr-warn{background:rgba(245,167,66,.08);border:1px solid rgba(245,167,66,.2);border-radius:6px;padding:7px 12px;font-size:11px;color:var(--amber);font-family:'IBM Plex Mono',monospace;margin-top:8px;line-height:1.6;}
+.pr-copy-btn{width:100%;margin-top:12px;padding:8px;}
+.pr-no-action{font-size:11px;color:var(--text3);font-style:italic;padding:4px 0;}
+
+.ph-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:11px 13px;margin-bottom:7px;cursor:pointer;transition:border-color .15s;}
+.ph-item:hover{border-color:var(--border2);}
+.ph-item-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.ph-date{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);}
+.ph-label{font-size:12px;font-weight:500;}
+.ph-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.ph-chip{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 8px;border-radius:4px;border:1px solid var(--border);background:var(--bg2);}
+.ph-chip.pos{color:#69db7c;border-color:rgba(105,219,124,.2);}
+.ph-chip.neg{color:#ff6b6b;border-color:rgba(255,107,107,.2);}
+.ph-del{margin-left:auto;padding:2px 7px;border-radius:4px;font-size:10px;cursor:pointer;border:1px solid var(--unk-border);color:var(--red);background:transparent;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <div class="app-logo">// <span>AGENT</span>_SYS</div>
+    <div class="app-tagline">代理對帳系統 v3</div>
+  </div>
+  <div class="header-right">
+    <span class="last-save" id="last-save"></span>
+    <button class="btn accent" onclick="backupAll()" style="font-size:11px;">💾 一鍵備份</button>
+    <button class="btn" onclick="document.getElementById('restore-file').click()" style="font-size:11px;">📂 還原備份</button>
+    <input type="file" id="restore-file" accept=".json" style="display:none" onchange="restoreAll(event)">
+  </div>
+</header>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('match',this)"><span class="nav-icon">📊</span>對帳比對</button>
+  <button class="nav-btn" onclick="showPage('clubs',this)"><span class="nav-icon">🏠</span>俱樂部總覽</button>
+  <button class="nav-btn" onclick="showPage('agents',this)"><span class="nav-icon">👤</span>代理帳號</button>
+  <button class="nav-btn" onclick="showPage('acctable',this)"><span class="nav-icon">📋</span>帳號對照表</button>
+  <button class="nav-btn" onclick="showPage('profit',this)"><span class="nav-icon">💰</span>拆潤計算</button>
+</nav>
+
+<main class="main">
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 1: 對帳比對
+═══════════════════════════════════════════════════════════ -->
+<div id="page-match" class="page active">
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-title">Step 1 — 報表來源</div>
+      <div class="src-row">
+        <span class="src-lbl">來自：</span>
+        <div id="src-btn-container" style="display:flex;gap:7px;flex-wrap:wrap;"></div>
+      </div>
+
+      <div class="panel-title" style="margin-top:6px;">Step 2 — 上傳 CSV 報表</div>
+      <div class="uzone" id="csv-drop">
+        <input type="file" accept=".csv,text/csv" onchange="handleCSV(event)">
+        <div class="uzone-ico">📄</div>
+        <div class="uzone-lbl">拖曳或點擊上傳 <b>CSV 報表</b></div>
+      </div>
+      <div class="status" id="csv-status"></div>
+
+      <hr class="sep">
+      <div class="panel-title">Step 2（備用）— 上傳截圖</div>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:8px;">蜂蜜綠截圖時使用，AI 同時識別 ID 與金額</p>
+      <div class="uzone" id="img-drop">
+        <input type="file" accept="image/*" onchange="handleImg(event)">
+        <div class="uzone-ico">🖼</div>
+        <div class="uzone-lbl">拖曳或點擊上傳 <b>截圖</b></div>
+      </div>
+      <img id="preview-img" alt="預覽">
+      <div class="status" id="ocr-status"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">手動貼上</div>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:8px;">每行：<code style="color:var(--accent2)">ID,金額</code> 或只貼 ID</p>
+      <textarea class="inp" id="manual-txt" placeholder="740143,-11000&#10;731489,-7187&#10;或只貼 ID：&#10;740143&#10;731489"></textarea>
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn accent" onclick="matchManual()">▶ 比對</button>
+        <button class="btn" onclick="document.getElementById('manual-txt').value=''">清除</button>
+      </div>
+
+      <hr class="sep">
+      <div class="panel-title">圖例</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--mj-c)"></div>MJ</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--fan-c)"></div>凡</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--qs-c)"></div>清水</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--unk-c)"></div>未在對照表</div>
+      </div>
+      <hr class="sep">
+      <div class="panel-title">說明</div>
+      <p style="font-size:12px;color:var(--text3);line-height:1.9;">
+        CSV：自動識別代理分組與數字欄位<br>
+        截圖：AI 擷取 ID＋金額（需網路）<br>
+        各團隊底部顯示欄位小計
+      </p>
+    </div>
+
+    <div class="panel full">
+      <div class="panel-title">比對結果</div>
+      <div class="warn" id="no-src-warn">⚠ 建議先選擇報表來源，比對才會精準</div>
+      <div id="result-area"><div class="empty-state">選擇來源後上傳 CSV 或截圖，結果顯示在這裡</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 2: 俱樂部總覽
+═══════════════════════════════════════════════════════════ -->
+<div id="page-clubs" class="page">
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
+    <button class="btn primary" onclick="openClubModal()">＋ 新增俱樂部</button>
+    <button class="btn" onclick="exportClubData()">匯出備份</button>
+    <button class="btn" onclick="openRenameModal()">✎ 批次改名</button>
+    <button class="btn danger" onclick="resetClubData()">重置預設</button>
+  </div>
+  <div class="sub-tabs">
+    <button class="sub-tab active" onclick="showClubTab('all',this)">全部</button>
+    <button class="sub-tab" onclick="showClubTab('whale',this)">🐳 大鯨魚</button>
+    <button class="sub-tab" onclick="showClubTab('honey',this)">🍯 蜂蜜綠</button>
+    <button class="sub-tab" onclick="showClubTab('aplatform',this)">A 平台</button>
+    <button class="sub-tab" onclick="showClubTab('qilai',this)">起來(02)</button>
+    <button class="sub-tab" onclick="showClubTab('dantan',this)">🥚 蛋蛋香</button>
+    <button class="sub-tab" onclick="showClubTab('kuo',this)">🔑 kuo</button>
+  </div>
+  <div id="club-content"></div>
+  <div id="club-legend" style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);">
+    <div class="legend">
+      <div class="legend-item"><span class="tag mj" style="padding:2px 8px">MJ</span>使用中</div>
+      <div class="legend-item"><span class="tag fan" style="padding:2px 8px">凡</span>規劃中</div>
+      <div class="legend-item"><span class="tag qs" style="padding:2px 8px">清水</span>猶豫中</div>
+      <div class="legend-item"><span class="tag unassigned" style="padding:2px 8px">未分配</span>帳號備妥</div>
+      <div class="legend-item"><span class="tag prep" style="padding:2px 8px">帳號未建</span>待新增</div>
+      <div class="legend-item"><span class="tag shared" style="padding:2px 8px">共用</span>多團隊共用</div>
+      <div class="legend-item"><span class="tag planning" style="padding:2px 8px">規劃中</span>尚未確定</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 3: 代理帳號
+═══════════════════════════════════════════════════════════ -->
+<div id="page-agents" class="page">
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
+    <button class="btn primary" onclick="openAgentModal()">＋ 新增代理</button>
+    <button class="btn" onclick="exportAgentData()">匯出備份</button>
+  </div>
+  <div id="agent-content"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 4: 帳號對照表
+═══════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════
+     PAGE 4: 帳號對照表
+═══════════════════════════════════════════════════════════ -->
+<div id="page-acctable" class="page">
+  <div class="grid2">
+
+    <!-- 左：批次新增 -->
+    <div>
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="panel-title">批次新增帳號</div>
+        <div class="form-group">
+          <label>貼上 ID（空格或換行分隔）</label>
+          <textarea class="inp" id="batch-ids" style="min-height:100px;" placeholder="例：733992 736439 736704&#10;或每行一個 ID"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div class="form-group" style="margin:0">
+            <label>所屬團隊</label>
+            <select class="inp" id="batch-team">
+              <option value="MJ">MJ</option>
+              <option value="凡">凡</option>
+              <option value="清水">清水</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>代理帳號</label>
+            <input class="inp" id="batch-agent" type="text" placeholder="例：ls_">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>上級代理（平台）</label>
+            <select class="inp" id="batch-platform">
+              <option value="蜂蜜綠">蜂蜜綠</option>
+              <option value="大鯨魚">大鯨魚</option>
+              <option value="A平台">A平台</option>
+              <option value="起來(02)">起來(02)</option>
+              <option value="蛋香(賜)">蛋香(賜)</option>
+              <option value="kuo">kuo</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>俱樂部</label>
+            <input class="inp" id="batch-club" type="text" placeholder="例：打破3">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn accent" style="flex:1;padding:9px;" onclick="batchAddAcc()">▶ 批次加入</button>
+          <button class="btn" onclick="document.getElementById('batch-ids').value=''">清除</button>
+        </div>
+        <div class="status" id="batch-status"></div>
+      </div>
+
+      <!-- 操作按鈕 -->
+      <div class="panel">
+        <div class="panel-title">匯入 / 匯出</div>
+        <div class="btn-row" style="margin:0">
+          <button class="btn" onclick="exportAccJSON()">匯出 JSON</button>
+          <button class="btn" onclick="document.getElementById('imp-json').click()">匯入 JSON</button>
+          <input type="file" id="imp-json" accept=".json" style="display:none" onchange="importAccJSON(event)">
+          <button class="btn danger" onclick="clearAccTable()">清空</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右：搜尋篩選＋列表 -->
+    <div>
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="panel-title">搜尋 / 篩選</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <input class="inp" id="acc-search" type="text" placeholder="搜尋 ID 或俱樂部名稱…" oninput="filterAccRows()">
+          <select class="inp" id="acc-filter-team" onchange="filterAccRows()">
+            <option value="">全部團隊</option>
+            <option value="MJ">MJ</option>
+            <option value="凡">凡</option>
+            <option value="清水">清水</option>
+          </select>
+          <select class="inp" id="acc-filter-platform" onchange="filterAccRows()">
+            <option value="">全部平台</option>
+            <option value="大鯨魚">大鯨魚</option>
+            <option value="蜂蜜綠">蜂蜜綠</option>
+            <option value="A平台">A平台</option>
+            <option value="起來(02)">起來(02)</option>
+            <option value="蛋香(賜)">蛋香(賜)</option>
+            <option value="kuo">kuo</option>
+          </select>
+          <select class="inp" id="acc-filter-club" onchange="filterAccRows()">
+            <option value="">全部俱樂部</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="count-note">顯示 <span id="acc-show-count">0</span> / 共 <span id="acc-count">0</span> 筆</span>
+          <button class="btn sm" onclick="clearAccFilter()">清除篩選</button>
+          <button class="btn sm danger" onclick="deleteFilteredAcc()" id="btn-del-filtered" style="display:none">刪除篩選結果</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div style="overflow-x:auto;">
+          <div class="map-grid-hdr">
+            <div class="gh">ID（帳號）</div>
+            <div class="gh">所屬團隊</div>
+            <div class="gh">代理帳號</div>
+            <div class="gh">上級代理</div>
+            <div class="gh">俱樂部</div>
+            <div class="gh"></div>
+          </div>
+          <div id="acc-rows"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     PAGE 5: 拆潤計算
+═══════════════════════════════════════════════════════════ -->
+<div id="page-profit" class="page">
+  <div class="grid2">
+
+    <!-- 左：輸入區 -->
+    <div>
+      <!-- 週期 -->
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="panel-title">週期 / 備註 / 匯率</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+          <input class="inp" id="pr-date-start" type="date" style="flex:1;min-width:120px;">
+          <span style="color:var(--text3);font-size:12px;">—</span>
+          <input class="inp" id="pr-date-end" type="date" style="flex:1;min-width:120px;">
+          <input class="inp" id="pr-label" type="text" placeholder="備註（選填）" style="flex:2;min-width:120px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);white-space:nowrap;">買入匯率　1 U =</span>
+          <input class="inp" id="pr-rate-usd" type="number" placeholder="例：32.5" step="0.01" min="1" style="width:110px;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);">台幣（台幣→U）</span>
+          <span id="pr-rate-hint" style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);"></span>
+        </div>
+      </div>
+
+      <!-- 輸入說明 -->
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:12px;padding:0 2px;">
+        每個團隊分別填各線數字。正數=盈利，負數=虧損，沒有該線留空即可。
+      </div>
+
+      <!-- ── MJ 團隊 ── -->
+      <div class="panel pr-team-panel" style="margin-bottom:12px;border-color:rgba(163,212,74,0.25);">
+        <div class="pr-team-header">
+          <span class="pr-team-label mj">MJ</span>
+          <span class="pr-team-rule">郭線單獨拆・新一＋火箭合併相抵</span>
+          <span class="pr-rate-badge">MJ 團隊 22%</span>
+        </div>
+        <div class="pr-input-grid">
+          <div class="pr-line-label guo">郭</div>
+          <input class="inp pr-inp" id="mj-g" type="number" placeholder="郭線盈虧" step="1">
+          <div class="pr-line-label xin">新一</div>
+          <input class="inp pr-inp" id="mj-x" type="number" placeholder="新一線盈虧" step="1">
+          <div class="pr-line-label rocket">火箭</div>
+          <input class="inp pr-inp" id="mj-r" type="number" placeholder="火箭線盈虧" step="1">
+        </div>
+      </div>
+
+      <!-- ── 清水 團隊 ── -->
+      <div class="panel pr-team-panel" style="margin-bottom:12px;border-color:rgba(245,167,66,0.25);">
+        <div class="pr-team-header">
+          <span class="pr-team-label qs">清水</span>
+          <span class="pr-team-rule">郭線單獨拆・新一＋火箭合併相抵</span>
+          <span class="pr-rate-badge">清水 團隊 25%</span>
+        </div>
+        <div class="pr-input-grid">
+          <div class="pr-line-label guo">郭</div>
+          <input class="inp pr-inp" id="qs-g" type="number" placeholder="郭線盈虧" step="1">
+          <div class="pr-line-label xin">新一</div>
+          <input class="inp pr-inp" id="qs-x" type="number" placeholder="新一線盈虧" step="1">
+          <div class="pr-line-label rocket">火箭</div>
+          <input class="inp pr-inp" id="qs-r" type="number" placeholder="火箭線盈虧" step="1">
+        </div>
+      </div>
+
+      <!-- ── 凡 團隊 ── -->
+      <div class="panel pr-team-panel" style="margin-bottom:12px;border-color:rgba(61,217,164,0.25);">
+        <div class="pr-team-header">
+          <span class="pr-team-label fan">凡</span>
+          <span class="pr-team-rule">郭線單獨拆・新一＋火箭合併相抵・漫威單獨（盈）/ 合併（虧）</span>
+          <span class="pr-rate-badge">凡 團隊 30%</span>
+        </div>
+        <div class="pr-input-grid">
+          <div class="pr-line-label guo">郭</div>
+          <input class="inp pr-inp" id="fan-g" type="number" placeholder="郭線盈虧" step="1">
+          <div class="pr-line-label xin">新一</div>
+          <input class="inp pr-inp" id="fan-x" type="number" placeholder="新一線盈虧" step="1">
+          <div class="pr-line-label rocket">火箭</div>
+          <input class="inp pr-inp" id="fan-r" type="number" placeholder="火箭線盈虧" step="1">
+        </div>
+        <div class="pr-input-grid" style="margin-top:6px;">
+          <div class="pr-line-label dantan" style="font-size:9px;">漫威</div>
+          <input class="inp pr-inp" id="fan-d" type="number" placeholder="漫威線盈虧（賜已扣20%後）" step="1" style="grid-column:span 5;">
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);margin-top:5px;">漫威：盈利→漫威10%+凡70%；虧損→可與新一/火箭合併相抵。賜的20%交帳時已扣。</div>
+      </div>
+
+      <!-- 比例設定 -->
+      <div class="panel" style="margin-bottom:14px;">
+        <div class="panel-title">拆潤比例（可調整）</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div class="form-group" style="margin:0">
+            <label>MJ 團隊（%）</label>
+            <input class="inp" id="rate-mj" type="number" value="22" min="0" max="100" step="0.1">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>清水 團隊（%）</label>
+            <input class="inp" id="rate-qs" type="number" value="25" min="0" max="100" step="0.1">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>凡 團隊（%）</label>
+            <input class="inp" id="rate-fan" type="number" value="30" min="0" max="100" step="0.1">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>漫威（%）</label>
+            <input class="inp" id="rate-marvel" type="number" value="10" min="0" max="100" step="0.1">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;">
+        <button class="btn accent" style="flex:1;padding:10px;" onclick="calcProfit()">▶ 計算</button>
+        <button class="btn" onclick="clearProfitInputs()">清除</button>
+      </div>
+    </div>
+
+    <!-- 右：結果＋歷史 -->
+    <div>
+      <div class="panel" style="min-height:200px;">
+        <div class="panel-title">計算結果</div>
+        <div id="profit-result"><div class="empty-state" style="padding:40px 0;">輸入數字後按計算</div></div>
+      </div>
+
+      <!-- U → 台幣 特殊換算 -->
+      <div class="panel" style="margin-top:14px;border-color:rgba(66,245,200,0.2);">
+        <div class="panel-title" style="color:var(--accent2)">特殊換算　U → 台幣</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:10px;">臨時查算，不影響主計算記錄</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div class="form-group" style="margin:0">
+            <label>U 金額</label>
+            <input class="inp" id="conv-u" type="number" placeholder="例：1000" step="1" oninput="calcConvert()">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>賣出匯率　1 U =</label>
+            <input class="inp" id="conv-rate" type="number" placeholder="例：31.8" step="0.01" oninput="calcConvert()">
+          </div>
+        </div>
+        <div id="conv-result" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text3);padding:8px 10px;background:var(--bg3);border-radius:6px;min-height:36px;display:flex;align-items:center;">
+          填入金額和匯率後自動換算
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px;">
+        <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>歷史記錄</span>
+          <button class="btn sm danger" onclick="clearProfitHistory()">清空</button>
+        </div>
+        <div id="profit-history"><div class="empty-state" style="padding:20px 0;">尚無記錄</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</main>
+
+<!-- ══ MODAL: 俱樂部 ══ -->
+<div class="modal-overlay" id="club-modal">
+  <div class="modal">
+    <h3 id="club-modal-title">新增俱樂部</h3>
+    <div class="form-group">
+      <label>俱樂部名稱</label>
+      <input class="inp" id="cm-name" type="text" placeholder="例：打破3">
+    </div>
+    <div class="form-group">
+      <label>平台</label>
+      <select class="inp" id="cm-platform">
+        <option value="whale">大鯨魚</option>
+        <option value="honey">蜂蜜綠</option>
+        <option value="aplatform">A 平台</option>
+        <option value="qilai">起來(02)</option>
+        <option value="dantan">蛋香（賜）</option>
+        <option value="kuo">kuo</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>團隊標籤</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="ct-mj"> MJ</label>
+        <label><input type="checkbox" id="ct-fan"> 凡</label>
+        <label><input type="checkbox" id="ct-qs"> 清水</label>
+        <label><input type="checkbox" id="ct-shared"> 共用</label>
+        <label><input type="checkbox" id="ct-unassigned"> 團隊未分配</label>
+        <label><input type="checkbox" id="ct-prep"> 帳號未建</label>
+        <label><input type="checkbox" id="ct-pending"> 尚未確定</label>
+        <label><input type="checkbox" id="ct-planning"> 規劃中</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>代理帳號（選填）</label>
+      <input class="inp" id="cm-agent" type="text" placeholder="例：ls_">
+    </div>
+    <div class="form-group">
+      <label>狀態</label>
+      <select class="inp" id="cm-banned">
+        <option value="false">正常</option>
+        <option value="true">已封號</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeClubModal()">取消</button>
+      <button class="btn primary" onclick="saveClub()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: 批次改名 ══ -->
+<div class="modal-overlay" id="rename-modal">
+  <div class="modal">
+    <h3>俱樂部批次改名</h3>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:14px;">改名後會自動同步帳號對照表，不需要手動更新。</p>
+    <div class="form-group">
+      <label>選擇要改名的俱樂部</label>
+      <select class="inp" id="rename-from"></select>
+    </div>
+    <div class="form-group">
+      <label>新名稱</label>
+      <input class="inp" id="rename-to" type="text" placeholder="例：打破6">
+    </div>
+    <div class="status" id="rename-status"></div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeRenameModal()">關閉</button>
+      <button class="btn primary" onclick="doRename()">確認改名</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: 代理 ══ -->
+<div class="modal-overlay" id="agent-modal">
+  <div class="modal">
+    <h3 id="agent-modal-title">新增代理帳號</h3>
+    <div class="form-group">
+      <label>暱稱</label>
+      <input class="inp" id="am-name" type="text" placeholder="例：ls_">
+    </div>
+    <div class="form-group">
+      <label>數字 ID（選填）</label>
+      <input class="inp" id="am-numid" type="text" placeholder="例：735294">
+    </div>
+    <div class="form-group">
+      <label>Mail</label>
+      <input class="inp" id="am-mail" type="text" placeholder="例：rexdoing771">
+    </div>
+    <div class="form-group">
+      <label>電話</label>
+      <input class="inp" id="am-phone" type="text" placeholder="例：980127737">
+    </div>
+    <div class="form-group">
+      <label>位置 / 裝置</label>
+      <input class="inp" id="am-device" type="text" placeholder="例：17pro">
+    </div>
+    <div class="form-group">
+      <label>上級代理（可複選）</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="ap-whale"> 大鯨魚</label>
+        <label><input type="checkbox" id="ap-honey"> 蜂蜜綠</label>
+        <label><input type="checkbox" id="ap-a"> A平台</label>
+        <label><input type="checkbox" id="ap-q"> 起來(02)</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>備註 / 待用俱樂部</label>
+      <input class="inp" id="am-note" type="text" placeholder="例：海海、哪壺">
+    </div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeAgentModal()">取消</button>
+      <button class="btn primary" onclick="saveAgent()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// SHARED STATE & STORAGE
+// ══════════════════════════════════════════════════════════
+const STORAGE = {
+  clubs: 'sys_clubs_v1',
+  clubNotes: 'sys_club_notes_v1',
+  agents: 'sys_agents_v1',
+  acc: 'sys_acc_v1'
+};
+
+// ══════════════════════════════════════════════════════════
+// DEFAULT CLUB DATA (from md + screenshot)
+// ══════════════════════════════════════════════════════════
+const DEFAULT_CLUBS = [
+  {id:1,  platform:'whale',     name:'一胡1',    tags:['mj'],               agent:'Hen',            banned:true},
+  {id:2,  platform:'whale',     name:'一胡2',    tags:['mj'],               agent:'yap',            banned:true},
+  {id:3,  platform:'whale',     name:'一胡3',    tags:['mj'],               agent:'ls_',            banned:true},
+  {id:4,  platform:'whale',     name:'一胡5',    tags:['unassigned'],        agent:'林',             banned:false},
+  {id:5,  platform:'whale',     name:'一胡6',    tags:['unassigned'],        agent:'七仔',           banned:false},
+  {id:6,  platform:'whale',     name:'一胡7',    tags:['unassigned'],        agent:'kai',            banned:false},
+  {id:7,  platform:'honey',     name:'蛋蛋1',    tags:['mj'],               agent:'Hen',            banned:false},
+  {id:8,  platform:'honey',     name:'蛋蛋2',    tags:['mj'],               agent:'yap',            banned:false},
+  {id:9,  platform:'honey',     name:'蛋蛋3',    tags:['mj'],               agent:'ls_',            banned:false},
+  {id:10, platform:'honey',     name:'打破1',    tags:['mj'],               agent:'Hen',            banned:false},
+  {id:11, platform:'honey',     name:'打破2',    tags:['mj'],               agent:'yap',            banned:false},
+  {id:12, platform:'honey',     name:'打破3',    tags:['mj','fan','shared'],agent:'ls_',            banned:false},
+  {id:13, platform:'honey',     name:'一胡4',    tags:['mj'],               agent:'安寶',           banned:false},
+  {id:14, platform:'honey',     name:'東南西北1', tags:['mj','prep'],        agent:'—',              banned:false},
+  {id:15, platform:'aplatform', name:'打破4',    tags:['fan'],              agent:'安寶',           banned:false},
+  {id:16, platform:'aplatform', name:'東南西北2', tags:['mj','prep'],        agent:'—',              banned:false},
+  {id:17, platform:'qilai',     name:'打破5',    tags:['fan'],              agent:'起來02管',        banned:false},
+  {id:18, platform:'qilai',     name:'打破6',    tags:['planning'],         agent:'起來02管',        banned:false},
+  {id:19, platform:'qilai',     name:'打破7',    tags:['planning'],         agent:'起來02管',        banned:false},
+  {id:20, platform:'qilai',     name:'東南西北3', tags:['mj','prep'],        agent:'—',              banned:false},
+  {id:21, platform:'dantan',    name:'打蛋香',    tags:['fan'],              agent:'賜',             banned:false},
+];
+
+const DEFAULT_CLUB_NOTES = {
+  whale: '大鯨魚只有一胡，沒有蛋蛋與打破。一胡4由安寶管，屬蜂蜜綠。',
+  honey: '安寶同時管蜂蜜綠（一胡4）與A平台（打破4），對帳時注意區分。',
+  aplatform: '',
+  qilai: '起來02負責人直接邀請會員，你不需要自建代理。',
+  dantan: '漫威介紹線。賜交帳時已扣20%，你收到80%後再付漫威10%，凡工作室70%。結算用U。',
+  kuo: ''
+};
+
+const PLATFORMS = {
+  whale:     {label:'大鯨魚',      color:'whale'},
+  honey:     {label:'蜂蜜綠',     color:'honey'},
+  aplatform: {label:'A 平台',     color:'aplatform'},
+  qilai:     {label:'起來(02)',   color:'qilai'},
+  dantan:    {label:'蛋蛋香（賜）', color:'dantan'},
+  kuo:       {label:'kuo',        color:'kuo'}
+};
+
+const TAG_LABELS = {mj:'MJ',fan:'凡',qs:'清水',shared:'共用',unassigned:'未分配',prep:'帳號未建',pending:'尚未確定',planning:'規劃中'};
+const ALL_CTAGS = ['mj','fan','qs','shared','unassigned','prep','pending','planning'];
+
+// ══════════════════════════════════════════════════════════
+// DEFAULT AGENT DATA
+// ══════════════════════════════════════════════════════════
+const DEFAULT_AGENTS = [
+  {id:1, name:'Hen',  numid:'724515', mail:'yhan91123',   phone:'66 620869369', device:'安卓桌面', platforms:['whale','honey'], note:''},
+  {id:2, name:'yap',  numid:'721130', mail:'zqi542442',   phone:'916092276',    device:'13pro',    platforms:['whale','honey'], note:'海海'},
+  {id:3, name:'ls_',  numid:'735294', mail:'rexdoing771', phone:'980127737',    device:'17pro',    platforms:['whale','honey'], note:'海海、哪壺'},
+  {id:4, name:'安寶', numid:'781826', mail:'wei201014',   phone:'—',            device:'安安的',   platforms:['honey','aplatform'], note:'海海、哪壺'},
+  {id:5, name:'林',   numid:'782006', mail:'tlin67463',   phone:'973443803',    device:'安卓桌面', platforms:['whale'], note:''},
+  {id:6, name:'七仔', numid:'724340', mail:'yhan91123+1', phone:'66 635405824', device:'平行',     platforms:['whale'], note:''},
+  {id:7, name:'kai',  numid:'781323', mail:'yhan91123+2', phone:'66 620589938', device:'平行',     platforms:['whale'], note:''},
+  {id:8, name:'澄',   numid:'781324', mail:'yhan91123+3', phone:'852 93259545', device:'Clone app',platforms:[], note:'待補'},
+  {id:9, name:'賜',   numid:'',       mail:'',            phone:'',             device:'',         platforms:['dantan'], note:'蛋蛋香上級代理，漫威介紹線，管理新增會員'},
+];
+
+// ══════════════════════════════════════════════════════════
+// LOAD / SAVE
+// ══════════════════════════════════════════════════════════
+let clubData = [], clubNotes = {}, agentData = [], accRows = [];
+let currentPage = 'match';
+let clubTab = 'all';
+let editingClubId = null, editingAgentId = null;
+let currentSrc = '';
+
+function loadAll() {
+  clubData   = loadKey(STORAGE.clubs,     DEFAULT_CLUBS);
+  clubNotes  = loadKey(STORAGE.clubNotes, DEFAULT_CLUB_NOTES);
+  agentData  = loadKey(STORAGE.agents,    DEFAULT_AGENTS);
+  accRows    = loadKey(STORAGE.acc, []).map(r=>({_id:Date.now()+Math.random(),...r}));
+  loadProfitHistory();
+}
+
+function loadKey(key, def) {
+  try {
+    const s = localStorage.getItem(key);
+    if (s) return JSON.parse(s);
+  } catch(e){}
+  return JSON.parse(JSON.stringify(def));
+}
+
+function saveAll() {
+  try {
+    localStorage.setItem(STORAGE.clubs,     JSON.stringify(clubData));
+    localStorage.setItem(STORAGE.clubNotes, JSON.stringify(clubNotes));
+    localStorage.setItem(STORAGE.agents,    JSON.stringify(agentData));
+    localStorage.setItem(STORAGE.acc,       JSON.stringify(accRows.map(({_id,...r})=>r)));
+    const now = new Date().toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('last-save').textContent = '已儲存 '+now;
+  } catch(e){}
+}
+
+// ══════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════
+function showPage(name, btn) {
+  currentPage = name;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='clubs') renderClubs();
+  if(name==='agents') renderAgents();
+  if(name==='acctable') renderAccRows();
+  if(name==='profit') renderProfitHistory();
+  if(name==='match') renderSrcButtons();
+}
+
+// ══════════════════════════════════════════════════════════
+// PAGE 5: 拆潤計算器
+// ══════════════════════════════════════════════════════════
+let profitHistory = [];
+
+function loadProfitHistory() {
+  try {
+    const s = localStorage.getItem('sys_profit_v1');
+    if(s) profitHistory = JSON.parse(s);
+  } catch(e){ profitHistory = []; }
+}
+
+function saveProfitHistory() {
+  try { localStorage.setItem('sys_profit_v1', JSON.stringify(profitHistory)); } catch(e){}
+}
+
+function getNum(id) {
+  const v = parseFloat(document.getElementById(id).value);
+  return isNaN(v) ? 0 : v;
+}
+
+function fmtMoney(n) {
+  if(n === 0) return '<span style="color:var(--text3)">0</span>';
+  const s = Math.abs(n).toLocaleString();
+  return n > 0
+    ? `<span class="pr-row-val pos">+${s}</span>`
+    : `<span class="pr-row-val neg">−${s}</span>`;
+}
+
+function fmtMoneyPlain(n) {
+  if(n === 0) return '0';
+  const s = Math.abs(Math.round(n)).toLocaleString();
+  return n > 0 ? `+${s}` : `−${s}`;
+}
+
+// ── 核心計算：單一團隊 ──
+// 郭線單獨拆；新一+火箭合併相抵後按貢獻比例拆
+function calcTeam(guo, xin, rocket, rate) {
+  // 郭線：永遠單獨
+  const guoPayout  = guo > 0 ? guo * rate : 0;
+  const studioGuo  = guo > 0 ? guo * (1 - rate) : guo;
+
+  // 新一+火箭合併相抵
+  const xrNet = xin + rocket;
+  let xinPayout = 0, rocketPayout = 0, studioXR = 0;
+
+  if(xrNet > 0) {
+    const totalPositive = (xin > 0 ? xin : 0) + (rocket > 0 ? rocket : 0);
+    if(totalPositive > 0) {
+      const totalLoss = Math.min(0, xin) + Math.min(0, rocket);
+      const xinNetFinal    = xin    > 0 ? xin    + (xin    / totalPositive) * totalLoss : 0;
+      const rocketNetFinal = rocket > 0 ? rocket + (rocket / totalPositive) * totalLoss : 0;
+      xinPayout    = xinNetFinal    > 0 ? xinNetFinal    * rate : 0;
+      rocketPayout = rocketNetFinal > 0 ? rocketNetFinal * rate : 0;
+      studioXR     = xrNet * (1 - rate);
+    }
+  } else {
+    studioXR = xrNet;
+  }
+
+  const totalPayout = guoPayout + xinPayout + rocketPayout;
+  const studioTotal = studioGuo + studioXR;
+  return { guoPayout, xinPayout, rocketPayout, totalPayout, studioTotal, studioGuo, studioXR, xrNet };
+}
+
+function toU(twd, usdRate) {
+  if(!usdRate || usdRate <= 0) return null;
+  return Math.round(twd / usdRate);
+}
+
+function fmtU(twd, usdRate) {
+  const u = toU(twd, usdRate);
+  if(u === null) return '';
+  const sign = u >= 0 ? '+' : '−';
+  return `<span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent2);margin-left:6px;background:rgba(66,245,200,0.07);padding:1px 6px;border-radius:3px;border:1px solid rgba(66,245,200,0.15)">${sign}${Math.abs(u).toLocaleString()} U</span>`;
+}
+
+function fmtUPlain(twd, usdRate) {
+  const u = toU(twd, usdRate);
+  if(u === null) return '';
+  const sign = u >= 0 ? '+' : '−';
+  return ` (${sign}${Math.abs(u)} U)`;
+}
+
+function calcProfit() {
+  const rate = { mj: getNum('rate-mj')/100, qs: getNum('rate-qs')/100, fan: getNum('rate-fan')/100 };
+  const rateDantanMarvel = getNum('rate-marvel')/100;
+  const rateDantanFan    = 1 - rateDantanMarvel - 0.2;
+  const usdRate = getNum('pr-rate-usd');
+
+  const inputs = {
+    mj:  { guo: getNum('mj-g'),  xin: getNum('mj-x'),  rocket: getNum('mj-r'), dantan: 0 },
+    qs:  { guo: getNum('qs-g'),  xin: getNum('qs-x'),  rocket: getNum('qs-r'), dantan: 0 },
+    fan: { guo: getNum('fan-g'), xin: getNum('fan-x'), rocket: getNum('fan-r'), dantan: getNum('fan-d') },
+  };
+
+  // ── 蛋蛋香線（僅凡）──
+  // 賜已扣20%，inputs.fan.dantan 是你收到的金額（總額的80%）
+  // 盈利：你付漫威 rateDantanMarvel，凡拿 rateDantanFan（以原始總額比例）
+  // 虧損：可與新一+火箭合併相抵
+  const fanDantan = inputs.fan.dantan;
+  // 換算回總額：你收到的是80%，所以總額 = 收到金額 / 0.8
+  const fanDantanTotal = fanDantan !== 0 ? fanDantan / 0.8 : 0;
+  const marvelPayout = fanDantanTotal > 0 ? fanDantanTotal * rateDantanMarvel : 0;
+  const fanDantanStudio = fanDantanTotal > 0 ? fanDantanTotal * rateDantanFan : 0; // 凡工作室份
+
+  // 蛋蛋香虧損時，視為凡的火箭/新一合併相抵的一部分
+  // 做法：把蛋蛋香虧損加入凡的 xrNet 計算
+  const fanDantanForMerge = fanDantan < 0 ? fanDantan : 0; // 只有虧才合併
+
+  // ── 一般團隊計算（不含蛋蛋香） ──
+  const results = {
+    mj:  calcTeam(inputs.mj.guo,  inputs.mj.xin,  inputs.mj.rocket,  rate.mj),
+    qs:  calcTeam(inputs.qs.guo,  inputs.qs.xin,  inputs.qs.rocket,  rate.qs),
+    fan: calcTeamWithDantan(inputs.fan.guo, inputs.fan.xin, inputs.fan.rocket, fanDantanForMerge, rate.fan),
+  };
+
+  // 凡工作室總結算 = 一般線結算 + 蛋蛋香盈利的凡份
+  const fanStudioActual = results.fan.studioTotal + (fanDantan > 0 ? fanDantanStudio : 0);
+
+  const dateStart = document.getElementById('pr-date-start').value;
+  const dateEnd   = document.getElementById('pr-date-end').value;
+  const label     = document.getElementById('pr-label').value.trim();
+  const periodStr = dateStart ? (dateEnd ? `${dateStart} ～ ${dateEnd}` : dateStart) : '（未填週期）';
+
+  const totalGuo    = results.mj.guoPayout + results.qs.guoPayout + results.fan.guoPayout;
+  const totalXin    = results.mj.xinPayout + results.qs.xinPayout + results.fan.xinPayout;
+  const totalRocket = results.mj.rocketPayout + results.qs.rocketPayout + results.fan.rocketPayout;
+  const totalPayout = totalGuo + totalXin + totalRocket + marvelPayout;
+  const studioTotal = results.mj.studioTotal + results.qs.studioTotal + fanStudioActual;
+
+  const TEAMS = [
+    { key:'mj',  label:'MJ',  color:'var(--mj-c)',  borderColor:'rgba(163,212,74,0.4)'  },
+    { key:'qs',  label:'清水', color:'var(--qs-c)',  borderColor:'rgba(245,167,66,0.4)'  },
+    { key:'fan', label:'凡',   color:'var(--fan-c)', borderColor:'rgba(61,217,164,0.4)'  },
+  ];
+
+  const rateHint = document.getElementById('pr-rate-hint');
+  if(usdRate > 0) rateHint.textContent = `→ 10萬台幣 ≈ ${Math.round(100000/usdRate).toLocaleString()} U`;
+  else rateHint.textContent = '（填入匯率後顯示 U 換算）';
+
+  let html = '';
+  if(usdRate > 0) {
+    html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent2);background:rgba(66,245,200,0.06);border:1px solid rgba(66,245,200,0.15);border-radius:6px;padding:6px 12px;margin-bottom:12px;">匯率 1 U = ${usdRate} 台幣　所有拆潤同時顯示 U 換算（整數）</div>`;
+  }
+
+  TEAMS.forEach(t => {
+    const inp = inputs[t.key];
+    const res = results[t.key];
+    const r   = rate[t.key];
+    const isFan = t.key === 'fan';
+    const hasData = inp.guo !== 0 || inp.xin !== 0 || inp.rocket !== 0 || (isFan && fanDantan !== 0);
+    if(!hasData) return;
+
+    html += `<div class="pr-section" style="border-left:3px solid ${t.borderColor}">
+      <div class="pr-section-title" style="color:${t.color}">${t.label} 團隊
+        <span style="font-size:10px;color:var(--text3);font-weight:400;">${t.label} 團隊 ${(r*100).toFixed(1)}%</span>
+      </div>`;
+
+    // 郭線
+    if(inp.guo !== 0) {
+      html += `<div class="pr-row"><span class="pr-row-label">郭線</span><span>${fmtMoney(inp.guo)}${fmtU(inp.guo,usdRate)}</span></div>`;
+      if(inp.guo > 0) html += `<div class="pr-row"><span class="pr-row-label" style="padding-left:10px">↳ 郭應拆（${(r*100).toFixed(1)}%）</span><span>${fmtMoney(res.guoPayout)}${fmtU(res.guoPayout,usdRate)}</span></div>`;
+      else html += `<div class="pr-row"><span class="pr-row-label" style="padding-left:10px;color:var(--text3)">↳ 郭線虧損，工作室吸收</span><span></span></div>`;
+    }
+
+    // 新一＋火箭（＋漫威虧損）合併
+    if(inp.xin !== 0 || inp.rocket !== 0 || (isFan && fanDantan < 0)) {
+      // 判斷是否有虧損需要相抵
+      const hasLoss = inp.xin < 0 || inp.rocket < 0 || (isFan && fanDantan < 0);
+
+      if(inp.xin !== 0)    html += `<div class="pr-row"><span class="pr-row-label">新一線</span><span>${fmtMoney(inp.xin)}${fmtU(inp.xin,usdRate)}</span></div>`;
+      if(inp.rocket !== 0) html += `<div class="pr-row"><span class="pr-row-label">火箭線</span><span>${fmtMoney(inp.rocket)}${fmtU(inp.rocket,usdRate)}</span></div>`;
+      if(isFan && fanDantan < 0) html += `<div class="pr-row"><span class="pr-row-label">漫威線（虧，合併相抵）</span><span>${fmtMoney(fanDantan)}${fmtU(fanDantan,usdRate)}</span></div>`;
+
+      // 只有有虧損時才顯示合計行
+      if(hasLoss) {
+        const netClass = res.xrNet >= 0 ? 'pos' : 'neg';
+        const xrLabel = isFan && fanDantan < 0 ? '新一＋火箭＋漫威合計' : '新一＋火箭合計';
+        html += `<div class="pr-row"><span class="pr-row-label">${xrLabel}</span><span><span class="pr-row-val ${netClass}">${res.xrNet>=0?'+':'−'}${Math.abs(res.xrNet).toLocaleString()}</span>${fmtU(res.xrNet,usdRate)}</span></div>`;
+      }
+
+      if(res.xrNet > 0) {
+        if(res.xinPayout > 0)    html += `<div class="pr-row"><span class="pr-row-label" style="padding-left:10px">↳ 新一應拆</span><span>${fmtMoney(res.xinPayout)}${fmtU(res.xinPayout,usdRate)}</span></div>`;
+        if(res.rocketPayout > 0) html += `<div class="pr-row"><span class="pr-row-label" style="padding-left:10px">↳ 火箭應拆</span><span>${fmtMoney(res.rocketPayout)}${fmtU(res.rocketPayout,usdRate)}</span></div>`;
+      } else {
+        html += `<div class="pr-row"><span class="pr-row-label" style="padding-left:10px;color:var(--text3)">↳ 合計虧損，工作室吸收</span><span></span></div>`;
+      }
+    }
+
+    // 漫威線盈利（凡專屬）
+    if(isFan && fanDantan > 0) {
+      html += `<div class="pr-row"><span class="pr-row-label">漫威線（賜已扣20%後）</span><span>${fmtMoney(fanDantan)}${fmtU(fanDantan,usdRate)}</span></div>`;
+      html += `<div class="pr-row"><span class="pr-row-label" style="color:var(--text3);font-size:11px;">↳ 換算總額</span><span style="font-size:11px;color:var(--text3)">${fmtMoney(Math.round(fanDantanTotal))}</span></div>`;
+      html += `<div class="pr-row"><span class="pr-row-label" style="padding-left:10px">↳ 漫威應拆（${(rateDantanMarvel*100).toFixed(0)}%）</span><span>${fmtMoney(Math.round(marvelPayout))}${fmtU(marvelPayout,usdRate)}</span></div>`;
+    }
+
+    // 本團隊結算
+    const thisStudio = isFan ? fanStudioActual : res.studioTotal;
+    html += `<div class="pr-total-row">
+      <span class="pr-total-label" style="font-size:12px">${t.label} 工作室結算</span>
+      <span style="display:flex;align-items:center;gap:4px">
+        <span class="pr-total-val ${thisStudio>=0?'pos':'neg'}" style="font-size:13px">${thisStudio>=0?'+':'−'}${Math.abs(Math.round(thisStudio)).toLocaleString()}</span>
+        ${fmtU(thisStudio,usdRate)}
+      </span>
+    </div>`;
+    html += `</div>`;
+  });
+
+  // 總結
+  html += `<div class="pr-section" style="border-left:3px solid var(--accent);margin-top:4px;">
+    <div class="pr-section-title" style="color:var(--accent)">本週總結</div>
+    ${totalGuo    > 0 ? `<div class="pr-row"><span class="pr-row-label">郭應拆合計</span><span>${fmtMoney(Math.round(totalGuo))}${fmtU(totalGuo,usdRate)}</span></div>` : ''}
+    ${totalXin    > 0 ? `<div class="pr-row"><span class="pr-row-label">新一應拆合計</span><span>${fmtMoney(Math.round(totalXin))}${fmtU(totalXin,usdRate)}</span></div>` : ''}
+    ${totalRocket > 0 ? `<div class="pr-row"><span class="pr-row-label">火箭應拆合計</span><span>${fmtMoney(Math.round(totalRocket))}${fmtU(totalRocket,usdRate)}</span></div>` : ''}
+    ${marvelPayout > 0 ? `<div class="pr-row"><span class="pr-row-label" style="color:var(--dantan-c)">漫威應拆（蛋蛋香）</span><span>${fmtMoney(Math.round(marvelPayout))}${fmtU(marvelPayout,usdRate)}</span></div>` : ''}
+    <div class="pr-row"><span class="pr-row-label">合夥人＋漫威合計應拆</span><span>${fmtMoney(Math.round(totalPayout))}${fmtU(totalPayout,usdRate)}</span></div>
+    <div class="pr-total-row">
+      <span class="pr-total-label">工作室本週結算</span>
+      <span style="display:flex;align-items:center;gap:4px">
+        <span class="pr-total-val ${studioTotal>=0?'pos':'neg'}">${studioTotal>=0?'+':'−'}${Math.abs(Math.round(studioTotal)).toLocaleString()}</span>
+        ${fmtU(studioTotal,usdRate)}
+      </span>
+    </div>
+  </div>`;
+
+  html += `<button class="btn pr-copy-btn" onclick="copyProfitSummary()">📋 複製摘要文字</button>`;
+  document.getElementById('profit-result').innerHTML = html;
+
+  const record = {
+    id: Date.now(), period: periodStr, label,
+    inputs, rates: rate, rateDantanMarvel, rateDantanFan, usdRate,
+    results: { totalGuo, totalXin, totalRocket, marvelPayout, totalPayout, studioTotal,
+               studioTotalU: toU(studioTotal,usdRate), totalPayoutU: toU(totalPayout,usdRate) },
+    ts: new Date().toISOString()
+  };
+  profitHistory.unshift(record);
+  if(profitHistory.length > 100) profitHistory = profitHistory.slice(0,100);
+  saveProfitHistory();
+  renderProfitHistory();
+}
+
+// 凡團隊：蛋蛋香虧損加入新一+火箭合併池
+function calcTeamWithDantan(guo, xin, rocket, dantanLoss, rate) {
+  const guoPayout = guo > 0 ? guo * rate : 0;
+  const studioGuo = guo > 0 ? guo * (1-rate) : guo;
+  // 蛋蛋香虧損加入合併池
+  const xrNet = xin + rocket + dantanLoss;
+  let xinPayout=0, rocketPayout=0, studioXR=0;
+  if(xrNet > 0) {
+    const totalPositive = (xin>0?xin:0) + (rocket>0?rocket:0);
+    if(totalPositive > 0) {
+      const totalLoss = Math.min(0,xin) + Math.min(0,rocket) + dantanLoss;
+      const xinNetFinal    = xin    > 0 ? xin    + (xin/totalPositive)*totalLoss : 0;
+      const rocketNetFinal = rocket > 0 ? rocket + (rocket/totalPositive)*totalLoss : 0;
+      xinPayout    = xinNetFinal    > 0 ? xinNetFinal    * rate : 0;
+      rocketPayout = rocketNetFinal > 0 ? rocketNetFinal * rate : 0;
+      studioXR = xrNet * (1-rate);
+    }
+  } else {
+    studioXR = xrNet;
+  }
+  return { guoPayout, xinPayout, rocketPayout, totalPayout: guoPayout+xinPayout+rocketPayout,
+           studioTotal: studioGuo+studioXR, studioGuo, studioXR, xrNet };
+}
+
+function copyProfitSummary() {
+  const rate = { mj: getNum('rate-mj')/100, qs: getNum('rate-qs')/100, fan: getNum('rate-fan')/100 };
+  const rateDantanMarvel = getNum('rate-marvel')/100;
+  const rateDantanFan    = 1 - rateDantanMarvel - 0.2;
+  const usdRate = getNum('pr-rate-usd');
+  const inputs = {
+    mj:  { guo: getNum('mj-g'),  xin: getNum('mj-x'),  rocket: getNum('mj-r'), dantan: 0 },
+    qs:  { guo: getNum('qs-g'),  xin: getNum('qs-x'),  rocket: getNum('qs-r'), dantan: 0 },
+    fan: { guo: getNum('fan-g'), xin: getNum('fan-x'), rocket: getNum('fan-r'), dantan: getNum('fan-d') },
+  };
+  const fanDantan = inputs.fan.dantan;
+  const fanDantanTotal = fanDantan !== 0 ? fanDantan / 0.8 : 0;
+  const marvelPayout = fanDantanTotal > 0 ? fanDantanTotal * rateDantanMarvel : 0;
+  const fanDantanStudio = fanDantanTotal > 0 ? fanDantanTotal * rateDantanFan : 0;
+  const fanDantanForMerge = fanDantan < 0 ? fanDantan : 0;
+  const res = {
+    mj:  calcTeam(inputs.mj.guo, inputs.mj.xin, inputs.mj.rocket, rate.mj),
+    qs:  calcTeam(inputs.qs.guo, inputs.qs.xin, inputs.qs.rocket, rate.qs),
+    fan: calcTeamWithDantan(inputs.fan.guo, inputs.fan.xin, inputs.fan.rocket, fanDantanForMerge, rate.fan),
+  };
+  const fanStudioActual = res.fan.studioTotal + (fanDantan > 0 ? fanDantanStudio : 0);
+  const dateStart = document.getElementById('pr-date-start').value;
+  const dateEnd   = document.getElementById('pr-date-end').value;
+  const label     = document.getElementById('pr-label').value.trim();
+  const periodStr = dateStart ? (dateEnd ? `${dateStart} ～ ${dateEnd}` : dateStart) : '';
+  const totalGuo    = res.mj.guoPayout + res.qs.guoPayout + res.fan.guoPayout;
+  const totalXin    = res.mj.xinPayout + res.qs.xinPayout + res.fan.xinPayout;
+  const totalRocket = res.mj.rocketPayout + res.qs.rocketPayout + res.fan.rocketPayout;
+  const totalPayout = totalGuo + totalXin + totalRocket + marvelPayout;
+  const studioTotal = res.mj.studioTotal + res.qs.studioTotal + fanStudioActual;
+  const U = (n) => usdRate > 0 ? fmtUPlain(n, usdRate) : '';
+  const TEAMS = [{key:'mj',label:'MJ'},{key:'qs',label:'清水'},{key:'fan',label:'凡'}];
+  let lines = [];
+  if(periodStr)   lines.push(`週期：${periodStr}`);
+  if(label)       lines.push(`備註：${label}`);
+  if(usdRate > 0) lines.push(`匯率：1 U = ${usdRate} 台幣`);
+  TEAMS.forEach(t => {
+    const inp = inputs[t.key], r = res[t.key];
+    const isFan = t.key === 'fan';
+    if(inp.guo===0 && inp.xin===0 && inp.rocket===0 && (!isFan || fanDantan===0)) return;
+    lines.push(''); lines.push(`【${t.label}】`);
+    if(inp.guo !== 0) {
+      lines.push(`  郭線：${fmtMoneyPlain(inp.guo)}${U(inp.guo)}`);
+      if(r.guoPayout > 0) lines.push(`  郭應拆：${fmtMoneyPlain(Math.round(r.guoPayout))}${U(r.guoPayout)}`);
+    }
+    if(inp.xin !== 0)    lines.push(`  新一線：${fmtMoneyPlain(inp.xin)}${U(inp.xin)}`);
+    if(inp.rocket !== 0) lines.push(`  火箭線：${fmtMoneyPlain(inp.rocket)}${U(inp.rocket)}`);
+    if(isFan && fanDantan < 0) lines.push(`  蛋蛋香（虧，合併相抵）：${fmtMoneyPlain(fanDantan)}${U(fanDantan)}`);
+    if(r.xrNet > 0) {
+      if(r.xinPayout > 0)    lines.push(`  新一應拆：${fmtMoneyPlain(Math.round(r.xinPayout))}${U(r.xinPayout)}`);
+      if(r.rocketPayout > 0) lines.push(`  火箭應拆：${fmtMoneyPlain(Math.round(r.rocketPayout))}${U(r.rocketPayout)}`);
+    }
+    if(isFan && fanDantan > 0) {
+      lines.push(`  蛋蛋香（賜已扣20%後）：${fmtMoneyPlain(fanDantan)}${U(fanDantan)}`);
+      lines.push(`  漫威應拆：${fmtMoneyPlain(Math.round(marvelPayout))}${U(marvelPayout)}`);
+    }
+    const thisStudio = isFan ? fanStudioActual : r.studioTotal;
+    lines.push(`  ${t.label}工作室結算：${fmtMoneyPlain(Math.round(thisStudio))}${U(thisStudio)}`);
+  });
+  lines.push(''); lines.push('─────────────────');
+  if(totalGuo    > 0) lines.push(`郭應拆：${fmtMoneyPlain(Math.round(totalGuo))}${U(totalGuo)}`);
+  if(totalXin    > 0) lines.push(`新一應拆：${fmtMoneyPlain(Math.round(totalXin))}${U(totalXin)}`);
+  if(totalRocket > 0) lines.push(`火箭應拆：${fmtMoneyPlain(Math.round(totalRocket))}${U(totalRocket)}`);
+  if(marvelPayout > 0) lines.push(`漫威應拆（蛋蛋香）：${fmtMoneyPlain(Math.round(marvelPayout))}${U(marvelPayout)}`);
+  lines.push(`合計應拆：${fmtMoneyPlain(Math.round(totalPayout))}${U(totalPayout)}`);
+  lines.push(`工作室本週結算：${fmtMoneyPlain(Math.round(studioTotal))}${U(studioTotal)}`);
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
+    const btn = document.querySelector('.pr-copy-btn');
+    btn.textContent = '✓ 已複製';
+    setTimeout(()=>{ btn.textContent = '📋 複製摘要文字'; }, 2000);
+  }).catch(()=>alert(lines.join('\n')));
+}
+
+function renderProfitHistory() {
+  const el = document.getElementById('profit-history');
+  if(!profitHistory.length){ el.innerHTML='<div class="empty-state" style="padding:20px 0;">尚無記錄</div>'; return; }
+  el.innerHTML = profitHistory.map(r => {
+    const s = r.results;
+    return `<div class="ph-item" onclick="loadProfitRecord(${r.id})">
+      <div class="ph-item-header">
+        <span class="ph-date">${r.period||'—'}</span>
+        ${r.label ? `<span class="ph-label">${r.label}</span>` : ''}
+        <button class="ph-del" onclick="event.stopPropagation();deleteProfitRecord(${r.id})">刪除</button>
+      </div>
+      <div class="ph-chips">
+        <span class="ph-chip ${s.studioTotal>=0?'pos':'neg'}">工作室 ${fmtMoneyPlain(Math.round(s.studioTotal))}${s.studioTotalU!=null?` / ${s.studioTotalU>0?'+':''}${s.studioTotalU} U`:''}</span>
+        ${s.totalGuo    > 0 ? `<span class="ph-chip">郭 +${Math.round(s.totalGuo).toLocaleString()}</span>` : ''}
+        ${s.totalXin    > 0 ? `<span class="ph-chip">新一 +${Math.round(s.totalXin).toLocaleString()}</span>` : ''}
+        ${s.totalRocket > 0 ? `<span class="ph-chip">火箭 +${Math.round(s.totalRocket).toLocaleString()}</span>` : ''}
+        ${s.marvelPayout > 0 ? `<span class="ph-chip" style="color:var(--dantan-c)">漫威 +${Math.round(s.marvelPayout).toLocaleString()}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadProfitRecord(id) {
+  const r = profitHistory.find(x=>x.id===id); if(!r) return;
+  const i = r.inputs;
+  ['mj','qs','fan'].forEach(t => {
+    if(i[t]) {
+      document.getElementById(`${t}-g`).value = i[t].guo    || '';
+      document.getElementById(`${t}-x`).value = i[t].xin    || '';
+      document.getElementById(`${t}-r`).value = i[t].rocket || '';
+      if(t==='fan') document.getElementById('fan-d').value = i[t].dantan || '';
+    }
+  });
+  if(r.period && r.period.includes('～')) {
+    const parts = r.period.split('～').map(s=>s.trim());
+    document.getElementById('pr-date-start').value = parts[0];
+    document.getElementById('pr-date-end').value   = parts[1];
+  }
+  document.getElementById('pr-label').value    = r.label   || '';
+  document.getElementById('pr-rate-usd').value = r.usdRate || '';
+  if(r.rateDantanMarvel) document.getElementById('rate-marvel').value = (r.rateDantanMarvel*100).toFixed(1);
+  calcProfit();
+}
+
+function deleteProfitRecord(id) {
+  profitHistory = profitHistory.filter(x=>x.id!==id);
+  saveProfitHistory(); renderProfitHistory();
+}
+
+function clearProfitHistory() {
+  if(!confirm('確定清空所有拆潤記錄？')) return;
+  profitHistory = []; saveProfitHistory(); renderProfitHistory();
+}
+
+function clearProfitInputs() {
+  ['mj-g','mj-x','mj-r','qs-g','qs-x','qs-r','fan-g','fan-x','fan-r','fan-d','pr-label','pr-rate-usd'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  document.getElementById('pr-rate-hint').textContent = '';
+  document.getElementById('profit-result').innerHTML='<div class="empty-state" style="padding:40px 0;">輸入數字後按計算</div>';
+}
+
+// ══════════════════════════════════════════════════════════
+// 一鍵備份 / 還原
+// ══════════════════════════════════════════════════════════
+function backupAll() {
+  const backup = {
+    version: 'v1',
+    ts: new Date().toISOString(),
+    clubs: clubData,
+    clubNotes,
+    agents: agentData,
+    acc: accRows.map(({_id,...r})=>r),
+    profitHistory
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '對帳系統備份_' + datestamp() + '.json';
+  a.click();
+}
+
+function restoreAll(e) {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const d = JSON.parse(ev.target.result);
+      if(!d.clubs && !d.acc) { alert('格式錯誤，請選擇正確的備份檔案'); return; }
+      if(!confirm(`確定還原備份？\n備份時間：${d.ts ? new Date(d.ts).toLocaleString('zh-TW') : '未知'}\n\n目前所有資料將被覆蓋。`)) return;
+      if(d.clubs)         clubData      = d.clubs;
+      if(d.clubNotes)     clubNotes     = d.clubNotes;
+      if(d.agents)        agentData     = d.agents;
+      if(d.acc)           accRows       = d.acc.map(x=>({_id:Date.now()+Math.random(),...x}));
+      if(d.profitHistory) profitHistory = d.profitHistory;
+      saveAll();
+      saveProfitHistory();
+      alert('✓ 還原成功');
+      if(currentPage==='clubs')    renderClubs();
+      if(currentPage==='agents')   renderAgents();
+      if(currentPage==='acctable') renderAccRows();
+      if(currentPage==='profit')   renderProfitHistory();
+    } catch(err) { alert('還原失敗：' + err.message); }
+  };
+  r.readAsText(f); e.target.value='';
+}
+
+function calcConvert() {
+  const u    = parseFloat(document.getElementById('conv-u').value);
+  const rate = parseFloat(document.getElementById('conv-rate').value);
+  const el   = document.getElementById('conv-result');
+  if(isNaN(u) || isNaN(rate) || rate <= 0) {
+    el.style.color = 'var(--text3)';
+    el.textContent = '填入金額和匯率後自動換算';
+    return;
+  }
+  const twd = Math.round(u * rate);
+  const sign = twd >= 0 ? '+' : '−';
+  el.innerHTML = `<span style="color:var(--accent2)">${u.toLocaleString()} U</span>
+    <span style="color:var(--text3);margin:0 8px;">×</span>
+    <span style="color:var(--text2)">${rate}</span>
+    <span style="color:var(--text3);margin:0 8px;">=</span>
+    <span style="color:${twd >= 0 ? '#69db7c' : '#ff6b6b'};font-weight:700;font-size:15px;">${sign}${Math.abs(twd).toLocaleString()} 台幣</span>`;
+}
+
+
+// ══════════════════════════════════════════════════════════
+// PAGE 2: CLUBS
+// ══════════════════════════════════════════════════════════
+function showClubTab(tab, btn) {
+  clubTab = tab;
+  document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderClubs();
+}
+
+function renderClubs() {
+  const container = document.getElementById('club-content');
+  const pids = clubTab==='all' ? Object.keys(PLATFORMS) : [clubTab];
+  container.innerHTML = pids.map(pid=>renderPlatformBlock(pid)).join('');
+}
+
+function renderPlatformBlock(pid) {
+  const p = PLATFORMS[pid];
+  if(!p) return '';
+  const allClubs = clubData.filter(c=>c.platform===pid);
+  const activeClubs = allClubs.filter(c=>!c.banned);
+  const bannedClubs = allClubs.filter(c=>c.banned);
+
+  const renderClubRow = (c) => {
+    const nameColor = c.banned ? 'banned' : p.color;
+    const tagsHtml = c.tags.map(t=>`<span class="tag ${t}">${TAG_LABELS[t]||t}</span>`).join('');
+    const bannedTag = c.banned ? '<span class="tag banned">封號</span>' : '';
+    return `<div class="club-row${c.banned?' banned':''}">
+      <span class="club-name-badge ${nameColor}">${c.name}</span>
+      <div class="tag-row">${tagsHtml}${bannedTag}</div>
+      <span class="agent-pill">${c.agent||'—'}</span>
+      <div class="row-actions">
+        <button class="row-btn edit" onclick="editClub(${c.id})">編輯</button>
+        <button class="row-btn ban" onclick="toggleBanClub(${c.id})">${c.banned?'解封':'封號'}</button>
+        <button class="row-btn del" onclick="deleteClub(${c.id})">刪除</button>
+      </div>
+    </div>`;
+  };
+
+  const activeRows = activeClubs.map(renderClubRow).join('');
+  const bannedRows = bannedClubs.map(renderClubRow).join('');
+  const bannedSection = bannedClubs.length ? `
+    <div class="banned-section">
+      <div class="banned-toggle" onclick="toggleBannedSection(this)">
+        <span class="arrow">▶</span>
+        封號俱樂部（${bannedClubs.length}）
+      </div>
+      <div class="banned-inner">${bannedRows}</div>
+    </div>` : '';
+
+  const note = clubNotes[pid];
+  return `<div class="platform-block">
+    <div class="platform-header">
+      <span class="platform-badge ${p.color}">${p.label}</span><hr>
+      <button class="add-club-inline" onclick="openClubModal('${pid}')">＋ 新增</button>
+    </div>
+    <div>${activeRows||'<div style="font-size:12px;color:var(--text3);padding:8px 0;">暫無使用中的俱樂部</div>'}</div>
+    ${bannedSection}
+    ${note?`<div class="platform-note" onclick="editClubNote('${pid}')">${note}</div>`:''}
+    <button class="add-club-inline" style="margin-top:6px" onclick="editClubNote('${pid}')">✎ 備註</button>
+  </div>`;
+}
+
+function openClubModal(platform) {
+  editingClubId = null;
+  document.getElementById('club-modal-title').textContent = '新增俱樂部';
+  document.getElementById('cm-name').value = '';
+  document.getElementById('cm-platform').value = platform || 'honey';
+  document.getElementById('cm-agent').value = '';
+  document.getElementById('cm-banned').value = 'false';
+  ALL_CTAGS.forEach(t=>{ document.getElementById('ct-'+t).checked=false; });
+  document.getElementById('club-modal').classList.add('open');
+}
+
+function editClub(id) {
+  const c = clubData.find(x=>x.id===id); if(!c) return;
+  editingClubId = id;
+  document.getElementById('club-modal-title').textContent = '編輯俱樂部';
+  document.getElementById('cm-name').value = c.name;
+  document.getElementById('cm-platform').value = c.platform;
+  document.getElementById('cm-agent').value = c.agent||'';
+  document.getElementById('cm-banned').value = c.banned?'true':'false';
+  ALL_CTAGS.forEach(t=>{ document.getElementById('ct-'+t).checked = c.tags.includes(t); });
+  document.getElementById('club-modal').classList.add('open');
+}
+
+function saveClub() {
+  const name = document.getElementById('cm-name').value.trim();
+  if(!name){alert('請輸入俱樂部名稱');return;}
+  const tags = ALL_CTAGS.filter(t=>document.getElementById('ct-'+t).checked);
+  const club = {
+    name,
+    platform: document.getElementById('cm-platform').value,
+    tags,
+    agent: document.getElementById('cm-agent').value.trim()||'—',
+    banned: document.getElementById('cm-banned').value==='true'
+  };
+  if(editingClubId) {
+    const idx = clubData.findIndex(x=>x.id===editingClubId);
+    if(idx>=0) clubData[idx]={...clubData[idx],...club};
+  } else {
+    club.id = Date.now();
+    clubData.push(club);
+  }
+  saveAll(); renderClubs(); closeClubModal();
+}
+
+function toggleBanClub(id) {
+  const c=clubData.find(x=>x.id===id);
+  if(c){c.banned=!c.banned;saveAll();renderClubs();}
+}
+
+function deleteClub(id) {
+  if(!confirm('確定刪除這個俱樂部？')) return;
+  clubData=clubData.filter(x=>x.id!==id);
+  saveAll(); renderClubs();
+}
+
+function editClubNote(pid) {
+  const val=prompt('編輯備註（清空則刪除）：', clubNotes[pid]||'');
+  if(val===null) return;
+  clubNotes[pid]=val.trim();
+  saveAll(); renderClubs();
+}
+
+function closeClubModal(){document.getElementById('club-modal').classList.remove('open');}
+
+function toggleBannedSection(el) {
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('open');
+}
+
+// ── 批次改名：俱樂部改名同步對照表 ──
+function openRenameModal() {
+  const clubs = [...new Set(clubData.map(c=>c.name))].sort();
+  const opts = clubs.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  document.getElementById('rename-from').innerHTML = opts;
+  document.getElementById('rename-to').value = '';
+  document.getElementById('rename-status').textContent = '';
+  document.getElementById('rename-modal').classList.add('open');
+}
+
+function doRename() {
+  const from = document.getElementById('rename-from').value;
+  const to   = document.getElementById('rename-to').value.trim();
+  const status = document.getElementById('rename-status');
+  if(!to){ status.className='status err'; status.textContent='請填入新名稱'; return; }
+  if(from === to){ status.className='status err'; status.textContent='新舊名稱相同'; return; }
+
+  // 更新俱樂部總覽
+  let clubCount = 0;
+  clubData.forEach(c=>{ if(c.name===from){ c.name=to; clubCount++; } });
+
+  // 更新對照表
+  let accCount = 0;
+  accRows.forEach(r=>{ if(r.club===from){ r.club=to; accCount++; } });
+
+  saveAll();
+  status.className='status ok';
+  status.textContent=`✓ 俱樂部改名完成：${clubCount} 個俱樂部、${accCount} 筆對照表已同步`;
+  renderClubs();
+  // 更新下拉選單
+  const opts = [...new Set(clubData.map(c=>c.name))].sort().map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  document.getElementById('rename-from').innerHTML = opts;
+}
+
+function closeRenameModal(){ document.getElementById('rename-modal').classList.remove('open'); }
+
+function exportClubData() {
+  const blob=new Blob([JSON.stringify({clubs:clubData,notes:clubNotes},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='俱樂部分配_'+datestamp()+'.json';a.click();
+}
+
+function resetClubData() {
+  if(!confirm('確定重置回預設資料？')) return;
+  clubData=JSON.parse(JSON.stringify(DEFAULT_CLUBS));
+  clubNotes=JSON.parse(JSON.stringify(DEFAULT_CLUB_NOTES));
+  saveAll(); renderClubs();
+}
+
+// ══════════════════════════════════════════════════════════
+// PAGE 3: AGENTS
+// ══════════════════════════════════════════════════════════
+function renderAgents() {
+  const container = document.getElementById('agent-content');
+  if(!agentData.length){
+    container.innerHTML='<div class="empty-state">尚無代理帳號資料</div>';return;
+  }
+  const cards = agentData.map(a=>{
+    const myClubs = clubData.filter(c=>c.agent===a.name);
+    const platformLabels = a.platforms.map(p=>PLATFORMS[p]?.label||p).join('、')||'—';
+    const clubsByPlatform = {};
+    myClubs.forEach(c=>{
+      if(!clubsByPlatform[c.platform]) clubsByPlatform[c.platform]=[];
+      clubsByPlatform[c.platform].push(c);
+    });
+    const clubHtml = Object.entries(clubsByPlatform).map(([pid,cs])=>{
+      const p=PLATFORMS[pid];
+      return cs.map(c=>`<div class="agent-club-item">
+        <span class="platform-badge ${p.color}" style="font-size:10px;padding:1px 6px">${p.label}</span>
+        <span class="club-name-badge ${c.banned?'banned':p.color}" style="font-size:11px;min-width:60px;padding:1px 6px">${c.name}</span>
+        ${c.tags.map(t=>`<span class="tag ${t}" style="font-size:10px;padding:1px 6px">${TAG_LABELS[t]||t}</span>`).join('')}
+        ${c.banned?'<span class="tag banned" style="font-size:10px">封號</span>':''}
+      </div>`).join('');
+    }).join('');
+
+    return `<div class="agent-card">
+      <div class="agent-card-header">
+        ${a.numid?`<span class="agent-card-id">${a.numid}</span>`:''}
+        <div>
+          <div class="agent-card-name">${a.name}</div>
+          ${a.mail?`<div class="agent-card-mail">${a.mail}</div>`:''}
+        </div>
+        <div style="margin-left:auto;display:flex;gap:5px;flex-shrink:0">
+          <button class="btn sm" onclick="editAgent(${a.id})">編輯</button>
+          <button class="btn sm danger" onclick="deleteAgent(${a.id})">刪除</button>
+        </div>
+      </div>
+      <div class="agent-info-row"><span class="agent-info-label">電話</span><span class="agent-info-val">${a.phone||'—'}</span></div>
+      <div class="agent-info-row"><span class="agent-info-label">裝置</span><span class="agent-info-val">${a.device||'—'}</span></div>
+      <div class="agent-info-row"><span class="agent-info-label">上級代理</span><span class="agent-info-val">${platformLabels}</span></div>
+      ${a.note?`<div class="agent-info-row"><span class="agent-info-label">待用</span><span class="agent-info-val" style="color:var(--amber)">${a.note}</span></div>`:''}
+      ${myClubs.length?`<div class="agent-clubs">
+        <div class="agent-clubs-title">管理的俱樂部（${myClubs.length}）</div>
+        ${clubHtml}
+      </div>`:'<div class="agent-clubs"><div class="agent-clubs-title" style="color:var(--text3)">暫無分配俱樂部</div></div>'}
+    </div>`;
+  }).join('');
+  container.innerHTML=`<div class="agent-cards">${cards}</div>`;
+}
+
+function openAgentModal(platform) {
+  editingAgentId=null;
+  document.getElementById('agent-modal-title').textContent='新增代理帳號';
+  ['am-name','am-numid','am-mail','am-phone','am-device','am-note'].forEach(id=>document.getElementById(id).value='');
+  ['whale','honey','a','q'].forEach(p=>document.getElementById('ap-'+p).checked=false);
+  document.getElementById('agent-modal').classList.add('open');
+}
+
+function editAgent(id) {
+  const a=agentData.find(x=>x.id===id); if(!a) return;
+  editingAgentId=id;
+  document.getElementById('agent-modal-title').textContent='編輯代理帳號';
+  document.getElementById('am-name').value=a.name;
+  document.getElementById('am-numid').value=a.numid||'';
+  document.getElementById('am-mail').value=a.mail||'';
+  document.getElementById('am-phone').value=a.phone||'';
+  document.getElementById('am-device').value=a.device||'';
+  document.getElementById('am-note').value=a.note||'';
+  const pMap={whale:'whale',honey:'honey',aplatform:'a',qilai:'q'};
+  ['whale','honey','a','q'].forEach(p=>document.getElementById('ap-'+p).checked=false);
+  (a.platforms||[]).forEach(p=>{ if(pMap[p]) document.getElementById('ap-'+pMap[p]).checked=true; });
+  document.getElementById('agent-modal').classList.add('open');
+}
+
+function saveAgent() {
+  const name=document.getElementById('am-name').value.trim();
+  if(!name){alert('請輸入暱稱');return;}
+  const pMap={whale:'whale',honey:'honey',a:'aplatform',q:'qilai'};
+  const platforms=['whale','honey','a','q'].filter(p=>document.getElementById('ap-'+p).checked).map(p=>pMap[p]);
+  const agent={
+    name,
+    numid:document.getElementById('am-numid').value.trim(),
+    mail:document.getElementById('am-mail').value.trim(),
+    phone:document.getElementById('am-phone').value.trim(),
+    device:document.getElementById('am-device').value.trim(),
+    platforms,
+    note:document.getElementById('am-note').value.trim()
+  };
+  if(editingAgentId){
+    const idx=agentData.findIndex(x=>x.id===editingAgentId);
+    if(idx>=0) agentData[idx]={...agentData[idx],...agent};
+  } else {
+    agent.id=Date.now();
+    agentData.push(agent);
+  }
+  saveAll(); renderAgents(); closeAgentModal();
+}
+
+function deleteAgent(id) {
+  if(!confirm('確定刪除這個代理帳號？')) return;
+  agentData=agentData.filter(x=>x.id!==id);
+  saveAll(); renderAgents();
+}
+
+function closeAgentModal(){document.getElementById('agent-modal').classList.remove('open');}
+
+function exportAgentData() {
+  const blob=new Blob([JSON.stringify(agentData,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='代理帳號_'+datestamp()+'.json';a.click();
+}
+
+// ══════════════════════════════════════════════════════════
+// PAGE 4: ACCOUNT TABLE
+// ══════════════════════════════════════════════════════════
+// ── 篩選狀態 ──
+let accFilterSearch = '', accFilterTeam = '', accFilterPlatform = '', accFilterClub = '';
+
+function getFilteredAcc() {
+  return accRows.filter(r => {
+    if(accFilterTeam     && r.team     !== accFilterTeam)     return false;
+    if(accFilterPlatform && r.platform !== accFilterPlatform) return false;
+    if(accFilterClub     && r.club     !== accFilterClub)     return false;
+    if(accFilterSearch) {
+      const q = accFilterSearch.toLowerCase();
+      if(!r.account.includes(q) && !(r.club||'').toLowerCase().includes(q) && !(r.agent||'').toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function filterAccRows() {
+  accFilterSearch   = document.getElementById('acc-search').value.trim();
+  accFilterTeam     = document.getElementById('acc-filter-team').value;
+  accFilterPlatform = document.getElementById('acc-filter-platform').value;
+  accFilterClub     = document.getElementById('acc-filter-club').value;
+  renderAccRows();
+}
+
+function clearAccFilter() {
+  accFilterSearch=''; accFilterTeam=''; accFilterPlatform=''; accFilterClub='';
+  document.getElementById('acc-search').value='';
+  document.getElementById('acc-filter-team').value='';
+  document.getElementById('acc-filter-platform').value='';
+  document.getElementById('acc-filter-club').value='';
+  renderAccRows();
+}
+
+function updateClubFilterOptions() {
+  const clubs = [...new Set(accRows.map(r=>r.club).filter(Boolean))].sort();
+  const sel = document.getElementById('acc-filter-club');
+  if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">全部俱樂部</option>' + clubs.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if(cur) sel.value = cur;
+}
+
+function renderAccRows() {
+  const c = document.getElementById('acc-rows');
+  if(!c) return;
+  updateClubFilterOptions();
+  const filtered = getFilteredAcc();
+  const show = filtered.slice(0, 500);
+
+  document.getElementById('acc-count').textContent = accRows.length;
+  document.getElementById('acc-show-count').textContent = filtered.length;
+
+  const hasFilter = accFilterSearch || accFilterTeam || accFilterPlatform || accFilterClub;
+  const delBtn = document.getElementById('btn-del-filtered');
+  if(delBtn) delBtn.style.display = hasFilter && filtered.length > 0 ? 'inline-block' : 'none';
+
+  c.innerHTML = '';
+  show.forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'map-grid-row';
+    d.innerHTML = `
+      <input class="inp" value="${esc(r.account)}" placeholder="帳號ID" oninput="updAcc(${r._id},'account',this.value)">
+      <input class="inp" value="${esc(r.team)}" placeholder="MJ" oninput="updAcc(${r._id},'team',this.value)">
+      <input class="inp" value="${esc(r.agent)}" placeholder="ls_" oninput="updAcc(${r._id},'agent',this.value)">
+      <input class="inp" value="${esc(r.platform)}" placeholder="大鯨魚" oninput="updAcc(${r._id},'platform',this.value)">
+      <input class="inp" value="${esc(r.club)}" placeholder="一胡3" oninput="updAcc(${r._id},'club',this.value)">
+      <button class="del-btn" onclick="delAccRow(${r._id})">×</button>`;
+    c.appendChild(d);
+  });
+
+  if(filtered.length > 500) {
+    const n = document.createElement('div');
+    n.style.cssText = 'font-family:IBM Plex Mono,monospace;font-size:11px;color:var(--text3);padding:6px;';
+    n.textContent = `... 另有 ${filtered.length - 500} 筆符合條件（已載入，可正常比對）`;
+    c.appendChild(n);
+  }
+  saveAll();
+}
+
+function deleteFilteredAcc() {
+  const filtered = getFilteredAcc();
+  if(!filtered.length) return;
+  if(!confirm(`確定刪除篩選出的 ${filtered.length} 筆帳號？`)) return;
+  const ids = new Set(filtered.map(r => r._id));
+  accRows = accRows.filter(r => !ids.has(r._id));
+  clearAccFilter();
+}
+
+function batchAddAcc() {
+  const raw   = document.getElementById('batch-ids').value;
+  const team  = document.getElementById('batch-team').value;
+  const agent = document.getElementById('batch-agent').value.trim();
+  const plat  = document.getElementById('batch-platform').value;
+  const club  = document.getElementById('batch-club').value.trim();
+  const status = document.getElementById('batch-status');
+
+  if(!club) { status.className='status err'; status.textContent='請填入俱樂部名稱'; return; }
+
+  const ids = raw.match(/\d{5,7}/g) || [];
+  if(!ids.length) { status.className='status err'; status.textContent='未找到有效 ID'; return; }
+
+  // 去除已存在的重複（同平台同俱樂部）
+  const existingKey = new Set(accRows.map(r=>`${r.account}|${r.platform}|${r.club}`));
+  const newOnes = ids.filter(id => !existingKey.has(`${id}|${plat}|${club}`));
+  const dupCount = ids.length - newOnes.length;
+
+  newOnes.forEach(id => {
+    accRows.push({ _id: Date.now()+Math.random(), account: id, team, agent, platform: plat, club });
+  });
+
+  renderAccRows();
+  document.getElementById('batch-ids').value = '';
+  status.className = 'status ok';
+  status.textContent = `✓ 新增 ${newOnes.length} 筆${dupCount > 0 ? `，略過 ${dupCount} 筆重複` : ''}`;
+  setTimeout(()=>{ status.textContent=''; }, 4000);
+}
+
+function addAccRow(d={}){
+  accRows.unshift({_id:Date.now()+Math.random(),account:d.account||'',team:d.team||'MJ',agent:d.agent||'',platform:d.platform||'',club:d.club||''});
+  renderAccRows();
+  setTimeout(()=>{
+    const first=document.querySelector('#acc-rows .map-grid-row input');
+    if(first){first.focus();first.scrollIntoView({behavior:'smooth',block:'center'});}
+  },50);
+}
+
+function delAccRow(id){accRows=accRows.filter(r=>r._id!==id);renderAccRows();}
+function updAcc(id,f,v){const r=accRows.find(r=>r._id===id);if(r){r[f]=v;saveAll();}}
+function clearAccTable(){if(confirm('確定清空所有對照資料？')){accRows=[];renderAccRows();}}
+
+function exportAccJSON(){
+  const blob=new Blob([JSON.stringify(accRows.map(({_id,...r})=>r),null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='帳號對照表.json';a.click();
+}
+
+function importAccJSON(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      accRows=JSON.parse(ev.target.result).map(d=>({_id:Date.now()+Math.random(),...d}));
+      renderAccRows();
+    }catch{alert('格式錯誤');}
+  };
+  r.readAsText(f);e.target.value='';
+}
+
+// ══════════════════════════════════════════════════════════
+// PAGE 1: MATCH / OCR
+// ══════════════════════════════════════════════════════════
+// 平台對照表：PLATFORMS key → 對照表 platform 欄位的值
+const PLATFORM_ACC_MAP = {
+  whale:     '大鯨魚',
+  honey:     '蜂蜜綠',
+  aplatform: 'A平台',
+  qilai:     '起來(02)',
+  dantan:    '蛋香(賜)',
+  kuo:       'kuo'
+};
+
+const PLATFORM_EMOJI = {
+  whale:'🐳', honey:'🍯', aplatform:'', qilai:'', dantan:'🥚', kuo:'🔑'
+};
+
+function renderSrcButtons() {
+  const container = document.getElementById('src-btn-container');
+  if(!container) return;
+  container.innerHTML = Object.entries(PLATFORMS).map(([pid, p]) => {
+    const emoji = PLATFORM_EMOJI[pid] || '';
+    return `<button class="src-btn src-${pid}" onclick="setSrc('${pid}')">${emoji ? emoji+' ' : ''}${p.label}</button>`;
+  }).join('');
+}
+
+function setSrc(pid) {
+  currentSrc = PLATFORM_ACC_MAP[pid] || pid;
+  document.querySelectorAll('.src-btn').forEach(b=>b.classList.remove('active'));
+  const el = document.querySelector(`.src-btn.src-${pid}`);
+  if(el) el.classList.add('active');
+  document.getElementById('no-src-warn').classList.remove('show');
+}
+
+function handleCSV(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>parseCSV(ev.target.result);
+  r.readAsText(f,'UTF-8');
+  e.target.value='';
+}
+
+function parseCSVLine(line){
+  const res=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){inQ=!inQ;}
+    else if(c===','&&!inQ){res.push(cur.trim());cur='';}
+    else{cur+=c;}
+  }
+  res.push(cur.trim());return res;
+}
+
+function cleanNum(s){
+  if(!s)return null;
+  const n=parseFloat(s.replace(/,/g,''));
+  return isNaN(n)?null:n;
+}
+
+function parseCSV(text){
+  const status=document.getElementById('csv-status');
+  const lines=text.split('\n').map(l=>l.replace(/^\uFEFF/,'').trim()).filter(Boolean);
+  if(!lines.length){status.className='status err';status.textContent='檔案是空的';return;}
+
+  let headerIdx=-1,headers=[];
+  for(let i=0;i<Math.min(5,lines.length);i++){
+    const cols=parseCSVLine(lines[i]);
+    if(cols.some(c=>c.includes('UID')||c.includes('暱稱')||c.includes('uid'))){
+      headerIdx=i;headers=cols;break;
+    }
+  }
+
+  const skipCols=['uid','暱稱','職稱','隸屬','最後','時間','房卡'];
+  const amtColIdx=[],amtColNames=[];
+  if(headerIdx>=0){
+    headers.forEach((h,i)=>{
+      if(i===0)return;
+      const hl=h.toLowerCase();
+      if(!skipCols.some(s=>hl.includes(s.toLowerCase()))&&h.trim()){
+        amtColIdx.push(i);amtColNames.push(h.trim());
+      }
+    });
+  }
+
+  const agents={};let currentAgent='（未分組）';let memberCount=0;
+  for(let i=0;i<lines.length;i++){
+    if(i===headerIdx)continue;
+    const cols=parseCSVLine(lines[i]);
+    const uid=cols[0]||'',nickname=cols[1]||'';
+    if(!uid&&nickname.trim()&&!nickname.includes('UID')&&!nickname.includes('暱稱')){
+      currentAgent=nickname.trim();
+      if(!agents[currentAgent])agents[currentAgent]=[];
+    } else if(/^\d{5,7}$/.test(uid.trim())){
+      const amounts={};
+      amtColIdx.forEach((ci,ii)=>{const v=cleanNum(cols[ci]);if(v!==null)amounts[amtColNames[ii]]=v;});
+      agents[currentAgent].push({uid:uid.trim(),nickname:nickname.trim(),amounts});
+      memberCount++;
+    }
+  }
+
+  if(!memberCount){status.className='status err';status.textContent='未識別到會員 ID';return;}
+  status.className='status ok';
+  status.textContent=`✓ ${Object.keys(agents).length} 個代理帳號，共 ${memberCount} 筆，金額欄位：${amtColNames.join('、')||'（無）'}`;
+  renderMatchResult(agents,amtColNames);
+}
+
+function handleImg(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const img=document.getElementById('preview-img');
+    img.src=ev.target.result;img.style.display='block';
+    runOCR(ev.target.result);
+  };
+  r.readAsDataURL(f);e.target.value='';
+}
+
+async function runOCR(dataUrl){
+  const status=document.getElementById('ocr-status');
+  status.className='status';
+  status.innerHTML='<span class="spin"></span>AI 識別中（ID + 金額）...';
+  try{
+    const base64=dataUrl.split(',')[1];
+    const mt=dataUrl.split(';')[0].split(':')[1];
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:2000,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:mt,data:base64}},
+          {type:'text',text:`這是遊戲代理報表截圖。請擷取每一行會員的帳號ID和金額。
+規則：
+- 帳號ID是每行最左側的5到7位純數字
+- 金額是該行顯示的數字（負數如-11,000寫成-11000，正數如5,750寫成5750，0就寫0）
+- 略過第一行（隊長/代理行）
+- 每行輸出：ID,金額
+- 只輸出這個格式，不要任何其他文字或說明
+
+範例輸出：
+740143,-11000
+731489,-7187
+739380,-6250
+723727,0`}
+        ]}]
+      })
+    });
+    const data=await resp.json();
+    const text=data.content?.map(c=>c.text||'').join('')||'';
+    const pairs=[];
+    text.split('\n').forEach(line=>{
+      line=line.trim();
+      const m=line.match(/^(\d{5,7}),(-?[\d]+)$/);
+      if(m)pairs.push({uid:m[1],amounts:{'金額':parseInt(m[2])}});
+    });
+    if(!pairs.length){status.className='status err';status.textContent='未識別到資料，請改用手動貼上';return;}
+    status.className='status ok';status.textContent=`✓ 識別到 ${pairs.length} 筆（ID + 金額）`;
+    const agents={'（截圖）':pairs.map(p=>({...p,nickname:''}))};
+    renderMatchResult(agents,['金額']);
+  }catch{
+    status.className='status err';status.textContent='識別失敗，請改用手動貼上';
+  }
+}
+
+function matchManual(){
+  const text=document.getElementById('manual-txt').value.trim();
+  if(!text){alert('請輸入資料');return;}
+  const pairs=[];
+  text.split('\n').forEach(line=>{
+    line=line.trim();if(!line)return;
+    const m1=line.match(/^(\d{5,7}),(-?[\d,]+)$/);
+    if(m1){pairs.push({uid:m1[1],nickname:'',amounts:{'金額':cleanNum(m1[2])||0}});return;}
+    const m2=line.match(/^(\d{5,7})$/);
+    if(m2){pairs.push({uid:m2[1],nickname:'',amounts:{}});return;}
+    const ids=line.match(/\d{5,7}/g)||[];
+    ids.forEach(id=>pairs.push({uid:id,nickname:'',amounts:{}}));
+  });
+  const unique=[...new Map(pairs.map(p=>[p.uid,p])).values()];
+  if(!unique.length){alert('未找到有效 ID');return;}
+  const agents={'（手動輸入）':unique};
+  renderMatchResult(agents,unique.some(p=>Object.keys(p.amounts).length>0)?['金額']:[]);
+}
+
+function lookupAcc(uid){
+  const pool=currentSrc?accRows.filter(r=>r.platform===currentSrc):accRows;
+  return pool.find(r=>r.account.trim()===uid)||null;
+}
+
+function fmtNum(n){
+  if(n===null||n===undefined)return '<span class="zero">—</span>';
+  if(n===0)return '<span class="zero">0</span>';
+  const s=n.toLocaleString();
+  return n<0?`<span class="neg">${s}</span>`:`<span class="pos">+${s}</span>`;
+}
+
+function renderMatchResult(agents,amtCols){
+  const area=document.getElementById('result-area');
+  document.getElementById('no-src-warn').classList.toggle('show',!currentSrc);
+
+  let totalMembers=0,matchedMembers=0;
+  const teamStats={};
+  const agentArr=[];
+
+  Object.entries(agents).forEach(([agentName,members])=>{
+    const processed=members.map(m=>{
+      totalMembers++;
+      const found=lookupAcc(m.uid);
+      const team=found?(found.team||'MJ'):'__unk__';
+      const agentLabel=found?found.agent:'';
+      const club=found?found.club:'';
+      if(found)matchedMembers++;
+      const tk=team==='__unk__'?'未知':team;
+      if(!teamStats[tk])teamStats[tk]={count:0,amounts:{}};
+      teamStats[tk].count++;
+      amtCols.forEach(col=>{
+        const v=m.amounts[col];
+        if(v!==undefined&&v!==null){
+          if(!teamStats[tk].amounts[col])teamStats[tk].amounts[col]=0;
+          teamStats[tk].amounts[col]+=v;
+        }
+      });
+      return {...m,team,agentLabel,club,found:!!found};
+    });
+    agentArr.push({name:agentName,members:processed});
+  });
+
+  let html=`<div class="chip-row">
+    <div class="chip t"><span class="n">${totalMembers}</span>筆</div>
+    <div class="chip m"><span class="n">${matchedMembers}</span>已比對</div>
+    <div class="chip u"><span class="n">${totalMembers-matchedMembers}</span>未找到</div>
+  </div>`;
+
+  const teamOrder=['MJ','凡','清水','未知'];
+  const sortedTeams=[...teamOrder.filter(t=>teamStats[t]),...Object.keys(teamStats).filter(t=>!teamOrder.includes(t))];
+  if(sortedTeams.length){
+    html+=`<div class="sub-grid">`;
+    sortedTeams.forEach(team=>{
+      const st=teamStats[team];
+      const cls=team==='未知'?'unk':team;
+      html+=`<div class="sub-card"><div class="sub-card-title ${cls}">${team==='未知'?'⚠ 未在對照表中':team+' 團隊'}</div>
+        <div class="sub-row"><span class="sub-label">人數</span><span class="sub-val">${st.count} 人</span></div>`;
+      amtCols.forEach(col=>{const v=st.amounts[col];if(v!==undefined)html+=`<div class="sub-row"><span class="sub-label">${col}</span><span class="sub-val">${fmtNum(v)}</span></div>`;});
+      html+=`</div>`;
+    });
+    html+=`</div>`;
+  }
+
+  html+=`<div style="overflow-x:auto;"><table class="rtable"><thead><tr>
+    <th>ID</th><th>暱稱</th><th>團隊</th><th>代理帳號</th><th>俱樂部</th>
+    ${amtCols.map(c=>`<th>${c}</th>`).join('')}
+  </tr></thead><tbody>`;
+
+  agentArr.forEach(({name,members})=>{
+    if(agentArr.length>1||name!=='（手動輸入）'){
+      html+=`<tr class="agent-hdr"><td colspan="${5+amtCols.length}">▸ 代理帳號：${name}（${members.length} 人）</td></tr>`;
+    }
+    members.forEach(m=>{
+      const teamCls=m.team==='__unk__'?'unk':m.team;
+      html+=`<tr>
+        <td><span style="font-family:'IBM Plex Mono',monospace">${m.uid}</span></td>
+        <td>${m.nickname||'—'}</td>
+        <td><span class="team-badge badge-${teamCls}">${m.team==='__unk__'?'未知':m.team}</span></td>
+        <td style="color:var(--text2)">${m.agentLabel||'—'}</td>
+        <td style="color:var(--text2)">${m.club||'—'}</td>
+        ${amtCols.map(col=>{const v=m.amounts[col];return`<td>${v!==undefined?fmtNum(v):'<span class="zero">—</span>'}</td>`;}).join('')}
+      </tr>`;
+    });
+  });
+  html+=`</tbody></table></div>`;
+  area.innerHTML=html;
+}
+
+// ══════════════════════════════════════════════════════════
+// DRAG DROP
+// ══════════════════════════════════════════════════════════
+function setupDrop(zoneId,handler){
+  const z=document.getElementById(zoneId);
+  if(!z)return;
+  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
+  z.addEventListener('dragleave',()=>z.classList.remove('drag'));
+  z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)handler(f);});
+}
+setupDrop('csv-drop',f=>{const r=new FileReader();r.onload=ev=>parseCSV(ev.target.result);r.readAsText(f,'UTF-8');});
+setupDrop('img-drop',f=>{
+  if(!f.type.startsWith('image/'))return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const img=document.getElementById('preview-img');
+    img.src=ev.target.result;img.style.display='block';
+    runOCR(ev.target.result);
+  };
+  r.readAsDataURL(f);
+});
+
+// ══════════════════════════════════════════════════════════
+// MODAL CLOSE ON BACKDROP
+// ══════════════════════════════════════════════════════════
+document.getElementById('club-modal').addEventListener('click',function(e){if(e.target===this)closeClubModal();});
+document.getElementById('rename-modal').addEventListener('click',function(e){if(e.target===this)closeRenameModal();});
+document.getElementById('agent-modal').addEventListener('click',function(e){if(e.target===this)closeAgentModal();});
+
+// ══════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function datestamp(){return new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\//g,'');}
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+loadAll();
+renderSrcButtons();
+</script>
+</body>
+</html>
